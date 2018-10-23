@@ -1,7 +1,7 @@
 # xbayOS
 a tiny operating system kernel (developing)
 
-一个简易的操作系统内核。
+一个简易的操作系统内核，在bochs中运行。
 
 ## TODO
 - [x] MBR -> loader
