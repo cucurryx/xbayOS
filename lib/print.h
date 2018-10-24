@@ -9,4 +9,7 @@ void put_char(uint8_t c);
 // string print function, just like puts in C.
 void put_str(char* s);
 
+// integer(hexical) print function 
+void put_int(uint32_t x);
+
 #endif

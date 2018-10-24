@@ -10,6 +10,9 @@
 
 %include "lib.inc"
 
+section .data
+put_int_buffer dq 0     ;实现put_int时，用来存放ascii码的缓冲区
+
 ;标示32位保护模式
 [bits 32]
 section .text
@@ -141,6 +144,58 @@ put_char:
   out dx, al
 
 .put_char_done:
+  popad
+  ret
+
+global put_int:
+put_int:
+  pushad
+  mov ebp, esp
+  mov eax, [ebp+4*9]
+  mov edx, eax
+  mov edi, 7
+  mov ecx, 8 
+  mov ebx, put_int_buffer
+
+.16based_4bits:
+  and edx, 0x0000000f
+
+  cmp edx, 9 
+  jg .is_A2F    
+  add edx, '0'          ;16进制数转化为对应字符
+  jmp .store    
+.is_A2F:
+  sub edx, 10
+  add edx, 'A'
+.store:
+  mov [ebx+edi], dl
+  dec edi
+  shr eax, 4
+  mov edx, eax
+  loop .16based_4bits
+
+.ready_to_print:
+  inc edi
+.skip_prefix_0:         ;跳过前缀0
+  cmp edi, 8 
+  je .full0
+.go_on_skip:
+  mov cl, [put_int_buffer+edi]
+  inc edi
+  cmp cl, '0'
+  je .skip_prefix_0
+  dec edi
+  jmp .put_each_num
+.full0:
+  mov cl, '0'
+.put_each_num:
+  push ecx
+  call put_char
+  add esp, 4 
+  inc edi 
+  mov cl, [put_int_buffer+edi]
+  cmp edi, 8 
+  jl .put_each_num
   popad
   ret
 
