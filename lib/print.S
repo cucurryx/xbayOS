@@ -14,6 +14,27 @@
 [bits 32]
 section .text
 
+global put_str
+put_str:
+  push ebx
+  push ecx
+  xor ecx, ecx
+  mov ebx, [esp + 12]   ;读入待打印字符串
+  
+.continue:
+  mov cl, [ebx]
+  cmp cl, 0 
+  jz .str_end
+  push ecx              ;给put_char函数的参数
+  call put_char
+  add esp, 4
+  inc ebx
+  jmp .continue
+.str_end:
+  pop ecx
+  pop ebx
+  ret
+
 global put_char
 put_char:
   pushad
