@@ -5,7 +5,8 @@ a tiny operating system kernel (developing)
 
 ## TODO
 - [x] MBR -> loader
-- [ ] loader -> kernel
+- [x] paging
+- [x] loader -> kernel
 - [ ] interrupt handler
 - [ ] debug tools
 - [ ] memory management system
