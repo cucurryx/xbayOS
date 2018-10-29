@@ -74,19 +74,6 @@ put_char:
   jz .is_bs
   jmp .is_others
 
-.is_cr:
-.is_lf:
-  xor dx, dx
-  mov ax, bx
-  mov si, 80
-  div si
-  sub bx, dx
-.is_cr_end:
-  add bx, 80
-  cmp bx, 2000
-.is_lf_end:
-  jl .set_cursor
-
 .is_bs:
   dec bx
   shl bx, 1
@@ -107,6 +94,19 @@ put_char:
   cmp bx, 2000
   jl .set_cursor 
   jmp .is_cr        ;如果超出限制，就换行
+
+.is_cr:
+.is_lf:
+  xor dx, dx
+  mov ax, bx
+  mov si, 80
+  div si
+  sub bx, dx
+.is_cr_end:
+  add bx, 80
+  cmp bx, 2000
+.is_lf_end:
+  jl .set_cursor
 
 ;滚屏操作，不更改屏幕开始寄存器，使用固定窗口
 .roll_screen:
