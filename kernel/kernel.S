@@ -9,7 +9,7 @@ extern put_str;
 
 section .data
 intr_str db "interrupt occur!", 0xa, 0 
-global initr_entry_table
+global intr_entry_table
 
 intr_entry_table:
 
