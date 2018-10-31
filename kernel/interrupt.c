@@ -24,11 +24,16 @@ struct gate_desc {
     uint16_t func_offset_high_word;     //中断处理程序在目标段内的偏移量的高16位
 };
 
-static void make_idt_desc(struct gate_desc* gdesc_ptr, uint8_t attr, intr_handler function);
-static void pic_init();
-
 static struct gate_desc idt[IDT_DESC_CNT];
 extern intr_handler intr_entry_table[IDT_DESC_CNT];
+
+intr_handler idt_table[IDT_DESC_CNT];
+char* intr_name[IDT_DESC_CNT]; 
+
+static void make_idt_desc(struct gate_desc* gdesc_ptr, uint8_t attr, intr_handler function);
+static void pic_init();
+static void default_intr_hanlder(uint8_t intr_vec_num);
+static void exception_init();
 
 //创建中断门描述符
 //参数1：指向新创建的中断门描述符的指针
@@ -67,10 +72,53 @@ static void pic_init() {
     outb(PIC_S_DATA, 0xff);
 }
 
+//如果设置中断处理函数，就会执行这个默认中断处理函数
+static void default_intr_hanlder(uint8_t intr_vec_num) {
+    //伪中断，不需要处理
+    if (intr_vec_num == 0x27 || intr_vec_num == 0x2f) {
+        return;
+    }
+    put_str("interrupt: [");
+    put_int(intr_vec_num);
+    put_str("]");
+    put_str(intr_name[intr_vec_num]);
+    put_str("\n");
+}
+
+//初始化中断处理函数表和异常名字
+static void exception_init() {
+    for (int i = 0; i < IDT_DESC_CNT; ++i) {
+        idt_table[i] = default_intr_hanlder;
+        intr_name[i] = "unkown"; 
+    }
+
+    intr_name[0]  = "#DE Divide Error";
+    intr_name[1]  = "#DB Debug";
+    intr_name[2]  = "/   NMI Interrupt";
+    intr_name[3]  = "#BP Breakpoint";
+    intr_name[4]  = "#OF Overflow";
+    intr_name[5]  = "#BR BOUND Range Exceeded";
+    intr_name[6]  = "#UD Invalid Opcode(UnDefined Opcode)";
+    intr_name[7]  = "#NM Device Not Available(No Math Coprocessor)";
+    intr_name[8]  = "#DF Double Fault";
+    intr_name[9]  = "#MF CoProcessor Segment Overrun(reserved)";
+    intr_name[10] = "#TS Invalid TSS";
+    intr_name[11] = "#NP Segment Not Present";
+    intr_name[12] = "#SS Stack Segment Fault";
+    intr_name[13] = "#GP General Protection";
+    intr_name[14] = "#PF Page Fault";
+    intr_name[15] = "    Reserved";
+    intr_name[16] = "#MF Floating-Point Error(MathFault)";
+    intr_name[17] = "#AC Alignment Check";
+    intr_name[18] = "#MC Machine Check";
+    intr_name[19] = "#XM SIMD Floating-Point Exception";
+}
+
 void idt_init() {
     idt_desc_init();    //初始化中断描述符表
+    exception_init();   //初始化中断处理函数和名字
     pic_init();         //初始化程序中断控制器
-
+    
     //加载idt
     uint64_t idt_operand = ((sizeof(idt) - 1) | ((uint64_t)(uint32_t)idt << 16));
     asm volatile("lidt %0" : : "m" (idt_operand));
