@@ -15,6 +15,9 @@
 #define PIC_S_CTRL 0xa0
 #define PIC_S_DATA 0xa1
 
+#define EFLAGS_IF_BIT 0x00000200    //mask of if for eflags
+#define GET_EFLAGS(EFLAG_VAR) asm volatile("pushfl; popl %0" : "=g" (EFLAG_VAR))
+
 //中断门描述符
 struct gate_desc {
     uint16_t func_offset_low_word;      //中断处理程序在目标段内的偏移量的低16位
@@ -78,7 +81,7 @@ static void default_intr_hanlder(uint8_t intr_vec_num) {
     if (intr_vec_num == 0x27 || intr_vec_num == 0x2f) {
         return;
     }
-    put_str("interrupt: [");
+    put_str("interrupt: [0x");
     put_int(intr_vec_num);
     put_str("]");
     put_str(intr_name[intr_vec_num]);
@@ -122,4 +125,37 @@ void idt_init() {
     //加载idt
     uint64_t idt_operand = ((sizeof(idt) - 1) | ((uint64_t)(uint32_t)idt << 16));
     asm volatile("lidt %0" : : "m" (idt_operand));
+}
+
+intr_stat intr_get_status() {
+    uint32_t eflags = 0;
+    GET_EFLAGS(eflags);
+    return (eflags & EFLAGS_IF_BIT) ? INTR_ON : INTR_OFF;
+}
+
+//设置中断状态为status，返回旧状态
+intr_stat intr_set_status(intr_stat status) {
+    intr_stat old = intr_get_status();
+    if (old != status) {
+        old == INTR_ON ? intr_disable() : intr_enable();
+    }
+    return old;
+}
+
+//打开中断，返回旧状态
+intr_stat intr_enable() {
+    intr_stat old_stat = intr_get_status();
+    if (old_stat == INTR_OFF) {
+        asm volatile("sti");
+    }
+    return old_stat;
+}
+
+//关闭中断，返回旧状态
+intr_stat intr_disable() {
+    intr_stat old_stat = intr_get_status();
+    if (old_stat == INTR_ON) {
+        asm volatile("cli":::"memory");
+    }
+    return old_stat;
 }
