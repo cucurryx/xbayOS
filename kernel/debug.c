@@ -11,7 +11,7 @@ void panic_spin(const char* filename, int line,
     put_str("[filename]:  ");
     put_str(filename);
     put_str("\n");
-    put_str("[line]:    0x");
+    put_str("[line]:      0x");
     put_int(line);
     put_char('\n');
     put_str("[function]:  ");

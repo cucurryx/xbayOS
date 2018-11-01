@@ -25,7 +25,7 @@ a tiny operating system kernel (developing)
 You need install [bochs](http://bochs.sourceforge.net/getcurrent.html) first, and create a hard disk image like this:`ata0-master: type=disk, path="the path", mode=flat`.
 
 
-It't better to put bochs in this direcotry(`xbayOS`).
+It's better to put bochs in this direcotry(`xbayOS`).
 
 2. make
 ```
