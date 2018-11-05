@@ -10,7 +10,8 @@ LDFLAGS = -m elf_i386 -Ttext $(KERNEL_ENTRY_POINT) -e main -Map $(TARGET_DIR)/ke
 
 OBJS = $(TARGET_DIR)/main.o $(TARGET_DIR)/init.o $(TARGET_DIR)/interrupt.o \
       $(TARGET_DIR)/timer.o $(TARGET_DIR)/kernel.o $(TARGET_DIR)/print.o \
-      $(TARGET_DIR)/debug.o $(TARGET_DIR)/string.o $(TARGET_DIR)/bitmap.o
+      $(TARGET_DIR)/debug.o $(TARGET_DIR)/string.o $(TARGET_DIR)/bitmap.o \
+	  $(TARGET_DIR)/memory.o
 
 $(TARGET_DIR)/main.o: kernel/main.c lib/print.h lib/stdint.h kernel/init.h
 	$(CC) $(CFLAGS) $< -o $@
@@ -31,6 +32,9 @@ $(TARGET_DIR)/string.o: lib/string.c lib/string.h lib/stdint.h kernel/debug.c ke
 	$(CC) $(CFLAGS) $< -o $@
 
 $(TARGET_DIR)/bitmap.o: lib/bitmap.c lib/bitmap.h lib/stdint.h kernel/debug.c kernel/debug.h 
+	$(CC) $(CFLAGS) $< -o $@
+
+$(TARGET_DIR)/memory.o: kernel/memory.c kernel/memory.h lib/bitmap.c lib/bitmap.h lib/stdint.h 
 	$(CC) $(CFLAGS) $< -o $@
 
 

@@ -5,12 +5,12 @@
 
 //length是bits指向内存的byte数
 //bits指向存储bitmap的内存
-struct bitmap {
+struct __bitmap {
     uint32_t length;
     uint8_t *bits;
 };
 
-typedef struct bitmap bitmap;
+typedef struct __bitmap bitmap;
 
 void bitmap_init(bitmap *bm, uint32_t len);
 bool bitmap_has(bitmap *bm, uint32_t position);

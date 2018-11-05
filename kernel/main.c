@@ -28,6 +28,6 @@ int main() {
         put_int(bitmap_has(&bm, i));
         put_char(' ');
     }
-
+    
     while (1);
 }
