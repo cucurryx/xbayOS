@@ -9,7 +9,7 @@ a tiny operating system kernel (developing)
 - [x] loader -> kernel
 - [x] interrupt handler
 - [x] debug tools
-- [ ] memory management system
+- [x] memory management system
 - [ ] kernel level thread
 - [ ] locks
 - [ ] IO

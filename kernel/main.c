@@ -3,31 +3,20 @@
 #include "debug.h"
 #include "string.h"
 #include "bitmap.h"
+#include "memory.h"
 
 int main() {
     put_str("I am kernel\n");
     init_all();
 
-    bitmap bm;
-    uint8_t a[10];
+    void *p1 = get_kern_pages(2);
 
-    bm.bits = a;
-    bitmap_init(&bm, 10);
+    put_str("get kernel page start virtual address is:");
+    put_int((uint32_t)p1);
 
-    for (int i = 0; i < 10; ++i) {
-        bitmap_set(&bm, i);
-    }
+    put_str("\n");
+    void *p2 = get_kern_pages(10);
+    put_int((uint32_t)p2);
 
-    int start = bitmap_scan(&bm, 20);
-    for (int i = 0; i < 20; ++i) {
-        bitmap_set(&bm, i+start);
-    }
-    for (int i = 0; i < 8*10; ++i) {
-        put_int(i);
-        put_char(' ');
-        put_int(bitmap_has(&bm, i));
-        put_char(' ');
-    }
-    
     while (1);
 }
