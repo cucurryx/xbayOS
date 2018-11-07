@@ -3,15 +3,15 @@ KERNEL_ENTRY_POINT = 0xc0001500
 AS = nasm
 CC = gcc
 LD = ld 
-LIB = -I lib/ -I kernel/ -I device/
+LIB = -I lib/ -I kernel/ -I device/ -I thread/
 ASFLAGS = -f elf -I lib/include/
-CFLAGS = -m32 -fno-stack-protector -fno-builtin $(LIB) -c
+CFLAGS = -Wall -Wmissing-prototypes -m32 -fno-stack-protector -fno-builtin $(LIB) -c
 LDFLAGS = -m elf_i386 -Ttext $(KERNEL_ENTRY_POINT) -e main -Map $(TARGET_DIR)/kernel.map
 
 OBJS = $(TARGET_DIR)/main.o $(TARGET_DIR)/init.o $(TARGET_DIR)/interrupt.o \
       $(TARGET_DIR)/timer.o $(TARGET_DIR)/kernel.o $(TARGET_DIR)/print.o \
       $(TARGET_DIR)/debug.o $(TARGET_DIR)/string.o $(TARGET_DIR)/bitmap.o \
-	  $(TARGET_DIR)/memory.o
+	  $(TARGET_DIR)/memory.o $(TARGET_DIR)/list.o $(TARGET_DIR)/thread.o
 
 $(TARGET_DIR)/main.o: kernel/main.c lib/print.h lib/stdint.h kernel/init.h
 	$(CC) $(CFLAGS) $< -o $@
@@ -36,6 +36,15 @@ $(TARGET_DIR)/bitmap.o: lib/bitmap.c lib/bitmap.h lib/stdint.h kernel/debug.c ke
 
 $(TARGET_DIR)/memory.o: kernel/memory.c kernel/memory.h lib/bitmap.c lib/bitmap.h lib/stdint.h 
 	$(CC) $(CFLAGS) $< -o $@
+
+$(TARGET_DIR)/thread.o: thread/thread.c thread/thread.h lib/stdint.h \
+        kernel/global.h lib/bitmap.h kernel/memory.h lib/string.h \
+        lib/stdint.h lib/print.h kernel/interrupt.h kernel/debug.h
+	$(CC) $(CFLAGS) $< -o $@
+
+$(TARGET_DIR)/list.o: lib/list.c lib/list.h lib/stdint.h kernel/interrupt.h kernel/interrupt.c 
+	$(CC) $(CFLAGS) $< -o $@
+
 
 
 $(TARGET_DIR)/kernel.o: kernel/kernel.S
