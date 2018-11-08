@@ -81,11 +81,32 @@ static void default_intr_hanlder(uint8_t intr_vec_num) {
     if (intr_vec_num == 0x27 || intr_vec_num == 0x2f) {
         return;
     }
-    put_str("interrupt: [0x");
+    set_cursor(0);
+    for (int i = 0; i < 5 * 80; ++i) {
+        put_char(' ');
+    }
+    set_cursor(0);
+
+    put_str("########INTERRUPT########\n");
+
+    put_str("        ");
+    put_char('[');
+    put_str("0x");
     put_int(intr_vec_num);
-    put_str("]");
+    put_char(']');
     put_str(intr_name[intr_vec_num]);
-    put_str("\n");
+    put_char('\n');
+
+    //page fault
+    if (intr_vec_num == 0xe) {
+        int pf_addr = 0;
+        asm ("movl %%cr2, %0" : "=r"(pf_addr));
+        put_str("the address of page fault: 0x");
+        put_int(pf_addr);
+        put_char('\n');
+    }
+    
+    put_str("#########################\n");
 }
 
 //初始化中断处理函数表和异常名字
@@ -158,4 +179,8 @@ intr_stat intr_disable() {
         asm volatile("cli":::"memory");
     }
     return old_stat;
+}
+
+void intr_set_handler(uint8_t vec_no, intr_handler handler) {
+    idt_table[vec_no] = handler;
 }

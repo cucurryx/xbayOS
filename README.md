@@ -10,7 +10,7 @@ a tiny operating system kernel (developing)
 - [x] interrupt handler
 - [x] debug tools
 - [x] memory management system
-- [ ] kernel level thread
+- [x] kernel level thread
 - [ ] locks
 - [ ] IO
 - [ ] user process

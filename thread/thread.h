@@ -2,6 +2,7 @@
 #define __THREAD_THREAD_H
 
 #include "stdint.h"
+#include "list.h"
 
 typedef enum __task_status task_status;
 typedef struct __intr_stack intr_stack;
@@ -59,15 +60,24 @@ struct __thread_stack {
 };
 
 struct __task_struct {
-    uint32_t *kstack;    //线程内核栈
+    uint32_t *kstack;         //线程内核栈
     task_status status;       //线程状态
     uint8_t priority;         //线程调度优先级
+    uint32_t ava_time;        //剩余可用的CPU时间
+    uint32_t elapsed_time;    //该线程已经占用的CPU时间
     char name[16];            //线程名
+    list_node gene_list_tag;  //普通链表使用的tag
+    list_node all_list_tag;   //专门给all_threads list使用的tag
+    uint32_t* page_dir;       //指向页表。如果为线程则为NULL，如果为进程则指向自己的页目录表
     uint32_t stack_magic_num; //线程魔数，用于边界检查，防止内核栈溢出覆盖task_struct数据
 };
 
-void thread_init(task_struct *thread, char *name, int prio);
+void task_struct_init(task_struct *thread, char *name, int prio);
 void thread_create(task_struct *thread, thread_func func, void *func_args);
 task_struct *thread_start(char *name, int prio, thread_func func, void *func_args);
+task_struct *running_thread();
+void schedule();
+void switch_to(task_struct *curr, task_struct *next);
+void thread_init(); 
 
 #endif // !__THREAD_THREAD_H

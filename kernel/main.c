@@ -6,15 +6,21 @@
 #include "memory.h"
 #include "list.h"
 #include "thread.h"
+#include "interrupt.h"
 
 void *start(void *arg);
 
 int main() {
     put_str("I am kernel\n");
     init_all();
+    intr_enable();
 
-    // void *p1 = get_kern_pages(2);
-    thread_start("thread1", 1, start, (void*)"thread1 ");
+    while (true) {
+        put_str("main ");
+    }
+
+    thread_start("thread1", 16, start, (void*)"thread1 ");
+    thread_start("thread2", 16, start, (void*)"thread2 ");
 
     while (1);
 }

@@ -12,4 +12,6 @@ void put_str(const char* s);
 // integer(hexical) print function 
 void put_int(uint32_t x);
 
+// set the position of cursor
+void set_cursor(uint32_t x);
 #endif
