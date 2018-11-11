@@ -13,8 +13,8 @@ struct __list_node {
 };
 
 struct __list {
-    list_node *head;
-    list_node *tail;
+    list_node head;
+    list_node tail;
 };
 
 void list_init(list *l);
