@@ -11,7 +11,8 @@ LDFLAGS = -m elf_i386 -Ttext $(KERNEL_ENTRY_POINT) -e main -Map $(TARGET_DIR)/ke
 OBJS = $(TARGET_DIR)/main.o $(TARGET_DIR)/init.o $(TARGET_DIR)/interrupt.o \
       $(TARGET_DIR)/timer.o $(TARGET_DIR)/kernel.o $(TARGET_DIR)/print.o \
       $(TARGET_DIR)/debug.o $(TARGET_DIR)/string.o $(TARGET_DIR)/bitmap.o \
-	  $(TARGET_DIR)/memory.o $(TARGET_DIR)/list.o $(TARGET_DIR)/thread.o
+	  $(TARGET_DIR)/memory.o $(TARGET_DIR)/list.o $(TARGET_DIR)/thread.o	\
+	  $(TARGET_DIR)/switch.o
 
 $(TARGET_DIR)/main.o: kernel/main.c lib/print.h lib/stdint.h kernel/init.h
 	$(CC) $(CFLAGS) $< -o $@
@@ -39,7 +40,7 @@ $(TARGET_DIR)/memory.o: kernel/memory.c kernel/memory.h lib/bitmap.c lib/bitmap.
 
 $(TARGET_DIR)/thread.o: thread/thread.c thread/thread.h lib/stdint.h \
         kernel/global.h lib/bitmap.h kernel/memory.h lib/string.h \
-        lib/stdint.h lib/print.h kernel/interrupt.h kernel/debug.h
+        lib/stdint.h lib/print.h kernel/interrupt.h kernel/debug.h 
 	$(CC) $(CFLAGS) $< -o $@
 
 $(TARGET_DIR)/list.o: lib/list.c lib/list.h lib/stdint.h kernel/interrupt.h kernel/interrupt.c 
@@ -52,8 +53,12 @@ $(TARGET_DIR)/kernel.o: kernel/kernel.S
 $(TARGET_DIR)/print.o: lib/print.S
 	$(AS) $(ASFLAGS) $< -o $@
 
+$(TARGET_DIR)/switch.o: thread/switch.S 
+	$(AS) $(ASFLAGS) $< -o $@
+
 $(TARGET_DIR)/kernel.bin: $(OBJS)
 	$(LD) $(LDFLAGS) $^ -o $@
+
 
 .PHONY: clean all hd
 
