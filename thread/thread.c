@@ -3,10 +3,13 @@
 #include "memory.h"
 #include "debug.h"
 #include "interrupt.h"
+#include "print.h"
 
 task_struct *main_thread;       //主线程的task_struct
 list ready_thread_list;         //就绪任务队列
 list all_thread_list;           //所有任务队列
+
+extern void switch_to(task_struct *curr, task_struct *next);
 
 typedef enum __node_type {
     GENERAL_LIST_NODE, 
@@ -15,6 +18,9 @@ typedef enum __node_type {
 
 
 static void kthread(thread_func func, void *arg) {
+    //因为直接从switch_to函数ret到此处
+    //时钟中断处理函数没有正常返回，所以需要重新打开中断
+    intr_enable();
     func(arg);
 }
 
@@ -104,7 +110,6 @@ task_struct *running_thread() {
 //任务调度函数
 void schedule() {
     ASSERT(intr_get_status() == INTR_OFF);
-
     task_struct *curr_thread = running_thread();
 
     //线程时间片耗尽
@@ -112,38 +117,39 @@ void schedule() {
         ASSERT(list_exist(&ready_thread_list, &curr_thread->gene_list_tag) == false);
         list_push_back(&ready_thread_list, &curr_thread->gene_list_tag);
         curr_thread->ava_time = curr_thread->priority;
-        curr_thread->elapsed_time = 0;
         curr_thread->status = READY;
     } else {
         //todo
     }
 
     ASSERT(list_empty(&ready_thread_list) == false);
+    
     list_node *temp_node = list_pop_front(&ready_thread_list);
     task_struct *next_thread = node_to_task(temp_node, GENERAL_LIST_NODE);
     next_thread->status = RUNNING;
+    
     switch_to(curr_thread, next_thread);
 }
 
 //保存curr的寄存器上下文，并将next的寄存器映像加载到寄存器中
-void switch_to(task_struct *curr, task_struct *next) {
-    asm volatile (
-        "push %esi;"
-        "push %edi;"
-        "push %ebx;"
-        "push %ebp;"
-        "movl 20(%esp), %eax;" // curr = [esp+20]
-        "movl %esp, (%eax);"      //保存栈指针在当前PCB的开头
+// void switch_to(task_struct *curr, task_struct *next) {
+//     asm volatile (
+//         "push %esi;"
+//         "push %edi;"
+//         "push %ebx;"
+//         "push %ebp;"
+//         "movl 20(%esp), %eax;" // curr = [esp+20]
+//         "movl %esp, (%eax);"      //保存栈指针在当前PCB的开头
         
-        "movl 24(%esp), %eax;" // next = [esp+24]
-        "movl (%eax), %esp;"      //设置栈指针
-        "popl %ebp;"
-        "popl %ebx;"
-        "popl %edi;"
-        "popl %esi;"
-        "ret;"
-    );
-}
+//         "movl 24(%esp), %eax;" // next = [esp+24]
+//         "movl (%eax), %esp;"      //设置栈指针
+//         "popl %ebp;"
+//         "popl %ebx;"
+//         "popl %edi;"
+//         "popl %esi;"
+//         "ret;"
+//     );
+// }
 
 //做线程方面的初始化工作，设置主线程
 void thread_init() {
