@@ -20,6 +20,11 @@ enum __task_status {
     DIED
 };
 
+typedef enum __node_type {
+    GENERAL_LIST_NODE, 
+    ALL_LIST_NODE
+} node_type;
+
 //中断栈，中断发生时保存程序的上下文环境
 //发生中断时，外部中断或者软中断，会以此顺序压入内核栈
 //该栈在内核栈所在页的最顶端
@@ -79,5 +84,8 @@ task_struct *running_thread();
 void schedule();
 void switch_to(task_struct *curr, task_struct *next);
 void thread_init(); 
+void thread_block(task_status state);
+void thread_unblock(task_struct *thread);
+task_struct *node_to_task(list_node *node, node_type type);
 
 #endif // !__THREAD_THREAD_H

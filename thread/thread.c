@@ -11,12 +11,6 @@ list all_thread_list;           //所有任务队列
 
 extern void switch_to(task_struct *curr, task_struct *next);
 
-typedef enum __node_type {
-    GENERAL_LIST_NODE, 
-    ALL_LIST_NODE
-} node_type;
-
-
 static void kthread(thread_func func, void *arg) {
     //因为直接从switch_to函数ret到此处
     //时钟中断处理函数没有正常返回，所以需要重新打开中断
@@ -33,7 +27,7 @@ static void make_main_thread() {
     list_push_back(&all_thread_list, &main_thread->all_list_tag);
 }
 
-static task_struct *node_to_task(list_node *node, node_type type) {
+task_struct *node_to_task(list_node *node, node_type type) {
     task_struct temp;
     uint32_t node_addr = 0;
     if (type == GENERAL_LIST_NODE) {
@@ -156,4 +150,32 @@ void thread_init() {
     list_init(&ready_thread_list);
     list_init(&all_thread_list);
     make_main_thread();
+}
+
+//阻塞当前线程，并且将其状态设置为state
+void thread_block(task_status state) {
+    intr_stat status;
+    INTERRUPT_DISABLE(status);
+
+    ASSERT(state == BLOCKED || state == HANGING || state == WAITING);
+    task_struct *curr_thread = running_thread();
+    curr_thread->status = state;
+    schedule();
+
+    INTERRUPT_RESTORE(status);
+}
+
+//解除thread的阻塞状态，变成就绪态，并加入就绪对列
+//加入的是就绪队列最前端，能够让其尽快得到调度
+void thread_unblock(task_struct *thread) {
+    intr_stat status;
+    INTERRUPT_DISABLE(status);
+
+    task_status state = thread->status;
+    ASSERT(state == BLOCKED || state == HANGING || state == WAITING);
+    ASSERT(list_exist(&ready_thread_list, &thread->gene_list_tag) == false);
+    list_push_front(&ready_thread_list, &thread->gene_list_tag);
+    thread->status = READY;
+
+    INTERRUPT_RESTORE(status);
 }

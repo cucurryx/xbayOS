@@ -28,6 +28,8 @@ static void set_frequency(uint8_t port, uint16_t no,uint16_t rw,
 }
 
 static void time_intr_handler() {
+    ASSERT(intr_get_status() == INTR_OFF);
+
     task_struct *curr_thread = running_thread();
     ASSERT(curr_thread->stack_magic_num == 0x19980312);
 

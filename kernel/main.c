@@ -7,8 +7,10 @@
 #include "list.h"
 #include "thread.h"
 #include "interrupt.h"
+#include "lock.h"
 
 void *start(void *arg);
+sem_t sem;
 
 int main() {
     put_str("I am kernel\n");
@@ -17,10 +19,12 @@ int main() {
     thread_start("thread2", 16, start, (void*)"thread2 ");
     intr_enable();
 
+    sem_init(&sem, 1);
+
     while (true) {
-        asm volatile("cli");
+        // sem_down(&sem);
         put_str("main ");
-        asm volatile("sti");
+        // sem_up(&sem);
     }
 
     while (1);
@@ -29,9 +33,10 @@ int main() {
 
 void *start(void *arg) {
     char *s = (char*)arg;
+    
     while (true) {
-        asm volatile("cli");
+        // sem_down(&sem);
         put_str(s);
-        asm volatile("sti");
+        // sem_up(&sem);
     }
 }

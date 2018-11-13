@@ -1,16 +1,6 @@
 #include "list.h"
 #include "interrupt.h"
 
-#define INTERRUPT_DISABLE(status)                  \
-    do {                                           \
-        status = intr_disable();                   \
-    } while (0);
-
-#define INTERRUPT_RESTORE(status)                  \
-    do {                                           \
-        intr_set_status(status);                   \
-    } while (0);
-
 //初始化双向链表，head和tail互相指向
 //链表设计为初始head, tail两个节点，然后插入的数据都在两者之间
 void list_init(list *l) {
