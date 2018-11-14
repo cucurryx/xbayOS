@@ -71,7 +71,7 @@ static void pic_init() {
     outb(PIC_S_DATA, 0x01);
 
     //打开主片上的IR0(时钟产生的中断)
-    outb(PIC_M_DATA, 0xfe);
+    outb(PIC_M_DATA, 0xfd);
     outb(PIC_S_DATA, 0xff);
 }
 

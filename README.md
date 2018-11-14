@@ -11,11 +11,14 @@ a tiny operating system kernel (developing)
 - [x] debug tools
 - [x] memory management system
 - [x] kernel level thread
-- [ ] locks
+- [x] locks
 - [ ] IO
 - [ ] user process
+- [ ] system call
+- [ ] heap memory
 - [ ] hard disk driver
 - [ ] file system
+- [ ] fork, read, shell, exec, balabala...
 - [ ] ...
 
 ## how to build

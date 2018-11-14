@@ -1,9 +1,6 @@
 #ifndef __DEVICE_KERBOARD_H
 #define __DEVICE_KERBOARD_H
 
-#define KEYBOARD_BUF_PORT 0x60
-#define KEYBOARD_OTHER_PORT 0x64
-
-
+void keyboard_init();
 
 #endif // !__DEVICE_KERBOARD_H

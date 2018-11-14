@@ -16,20 +16,20 @@ mutex_t mutex;
 
 int main() {
     init_all();
-    thread_start("threa1", 16, start, (void*)"thread1 ");
-    thread_start("thread2", 16, start, (void*)"thread2 ");
+    // thread_start("threa1", 16, start, (void*)"thread1 ");
+    // thread_start("thread2", 16, start, (void*)"thread2 ");
     intr_enable();
 
-    sem_init(&sem, 1);
-    mutex_init(&mutex);
+    // sem_init(&sem, 1);
+    // mutex_init(&mutex);
 
-    while (true) {
-        mutex_lock(&mutex);
-        mutex_lock(&mutex);
-        console_put_str("main ");
-        mutex_unlock(&mutex);
-        mutex_unlock(&mutex);
-    }
+    // while (true) {
+    //     mutex_lock(&mutex);
+    //     mutex_lock(&mutex);
+    //     console_put_str("main ");
+    //     mutex_unlock(&mutex);
+    //     mutex_unlock(&mutex);
+    // }
 
     while (1);
 }
