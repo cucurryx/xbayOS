@@ -11,6 +11,7 @@
 
 void *start(void *arg);
 sem_t sem;
+mutex_t mutex;
 
 int main() {
     put_str("I am kernel\n");
@@ -20,11 +21,14 @@ int main() {
     intr_enable();
 
     sem_init(&sem, 1);
+    mutex_init(&mutex);
 
     while (true) {
-        // sem_down(&sem);
+        mutex_lock(&mutex);
+        mutex_lock(&mutex);
         put_str("main ");
-        // sem_up(&sem);
+        mutex_unlock(&mutex);
+        mutex_unlock(&mutex);
     }
 
     while (1);
@@ -35,8 +39,8 @@ void *start(void *arg) {
     char *s = (char*)arg;
     
     while (true) {
-        // sem_down(&sem);
+        mutex_lock(&mutex);
         put_str(s);
-        // sem_up(&sem);
+        mutex_unlock(&mutex);
     }
 }

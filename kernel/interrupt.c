@@ -5,7 +5,7 @@
 #include "stdint.h"
 #include "print.h"
 
-#define IDT_DESC_CNT 0x21 //支持的中断数
+#define IDT_DESC_CNT 0x30 //支持的中断数
 
 //8259A主片(master)的控制端口和数据端口
 #define PIC_M_CTRL 0x20
@@ -136,6 +136,8 @@ static void exception_init() {
     intr_name[17] = "#AC Alignment Check";
     intr_name[18] = "#MC Machine Check";
     intr_name[19] = "#XM SIMD Floating-Point Exception";
+    intr_name[20] = "time interrupt";
+    intr_name[21] = "keyboard interrupt";
 }
 
 void idt_init() {
