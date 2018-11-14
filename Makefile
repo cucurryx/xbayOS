@@ -12,7 +12,8 @@ OBJS = $(TARGET_DIR)/main.o $(TARGET_DIR)/init.o $(TARGET_DIR)/interrupt.o \
       $(TARGET_DIR)/timer.o $(TARGET_DIR)/kernel.o $(TARGET_DIR)/print.o \
       $(TARGET_DIR)/debug.o $(TARGET_DIR)/string.o $(TARGET_DIR)/bitmap.o \
 	  $(TARGET_DIR)/memory.o $(TARGET_DIR)/list.o $(TARGET_DIR)/thread.o	\
-	  $(TARGET_DIR)/switch.o
+	  $(TARGET_DIR)/switch.o $(TARGET_DIR)/lock.o $(TARGET_DIR)/console.o \
+	  $(TARGET_DIR)/keyboard.o
 
 $(TARGET_DIR)/main.o: kernel/main.c lib/print.h lib/stdint.h kernel/init.h
 	$(CC) $(CFLAGS) $< -o $@
@@ -46,6 +47,14 @@ $(TARGET_DIR)/thread.o: thread/thread.c thread/thread.h lib/stdint.h \
 $(TARGET_DIR)/list.o: lib/list.c lib/list.h lib/stdint.h kernel/interrupt.h kernel/interrupt.c 
 	$(CC) $(CFLAGS) $< -o $@
 
+$(TARGET_DIR)/lock.o: thread/lock.c thread/lock.h lib/stdint.h kernel/interrupt.c kernel/interrupt.h thread/thread.h thread/thread.c
+	$(CC) $(CFLAGS) $< -o $@
+
+$(TARGET_DIR)/console.o: device/console.c device/console.h thread/lock.c thread/lock.h
+	$(CC) $(CFLAGS) $< -o $@
+
+$(TARGET_DIR)/keyboard.o: device/keyboard.c device/keyboard.c 
+	$(CC) $(CFLAGS) $< -o $@
 
 
 $(TARGET_DIR)/kernel.o: kernel/kernel.S

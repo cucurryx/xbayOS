@@ -8,13 +8,13 @@
 #include "thread.h"
 #include "interrupt.h"
 #include "lock.h"
+#include "console.h"
 
 void *start(void *arg);
 sem_t sem;
 mutex_t mutex;
 
 int main() {
-    put_str("I am kernel\n");
     init_all();
     thread_start("threa1", 16, start, (void*)"thread1 ");
     thread_start("thread2", 16, start, (void*)"thread2 ");
@@ -26,7 +26,7 @@ int main() {
     while (true) {
         mutex_lock(&mutex);
         mutex_lock(&mutex);
-        put_str("main ");
+        console_put_str("main ");
         mutex_unlock(&mutex);
         mutex_unlock(&mutex);
     }
@@ -40,7 +40,7 @@ void *start(void *arg) {
     
     while (true) {
         mutex_lock(&mutex);
-        put_str(s);
+        console_put_str(s);
         mutex_unlock(&mutex);
     }
 }

@@ -4,13 +4,15 @@
 #include "timer.h"
 #include "memory.h"
 #include "thread.h"
+#include "console.h"
 
 //初始化所有模块
 void init_all() {
-    put_str("init_all begin\n");
     idt_init();
     timer_init();
     mem_init();
     thread_init();
-    put_str("init_all ok\n");
+    console_init();
+
+    console_put_str("init_all ok\n");
 }
