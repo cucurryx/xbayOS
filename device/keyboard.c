@@ -3,6 +3,7 @@
 #include "console.h"
 #include "debug.h"
 #include "io.h"
+#include "io_queue.h"
 
 #define KEYBOARD_BUF_PORT 0x60
 #define KEYBOARD_OTHER_PORT 0x64
@@ -104,6 +105,8 @@ static bool shift_down;
 static bool alt_down;
 static bool capslock_down;
 static bool ext_scancode;
+io_queue_t keyboard_buffer;
+
 
 static void keyboard_interrupt_hanlder() {
     uint16_t scancode = inb(KEYBOARD_BUF_PORT);
@@ -155,7 +158,7 @@ static void keyboard_interrupt_hanlder() {
         uint8_t index = scancode;
         char ascii_char = has_shift ? scancode_ascii_map[index][1] : scancode_ascii_map[index][0];
         if (ascii_char != 0) {
-            console_put_char(ascii_char);
+            io_queue_putchar(&keyboard_buffer, ascii_char);
             return;
         }
 
@@ -176,6 +179,7 @@ static void keyboard_interrupt_hanlder() {
 }
 
 void keyboard_init() {
+    io_queue_init(&keyboard_buffer);
     intr_set_handler(0x21, keyboard_interrupt_hanlder);
 }
 

@@ -9,27 +9,25 @@
 #include "interrupt.h"
 #include "lock.h"
 #include "console.h"
+#include "io_queue.h"
 
 void *start(void *arg);
 sem_t sem;
 mutex_t mutex;
 
+extern io_queue_t keyboard_buffer;
+
 int main() {
     init_all();
-    // thread_start("threa1", 16, start, (void*)"thread1 ");
-    // thread_start("thread2", 16, start, (void*)"thread2 ");
+    thread_start("threa1", 16, start, (void*)"1_");
+    thread_start("thread2", 16, start, (void*)"2_");
     intr_enable();
 
-    // sem_init(&sem, 1);
-    // mutex_init(&mutex);
-
-    // while (true) {
-    //     mutex_lock(&mutex);
-    //     mutex_lock(&mutex);
-    //     console_put_str("main ");
-    //     mutex_unlock(&mutex);
-    //     mutex_unlock(&mutex);
-    // }
+    while (true) {
+        // console_put_str("main ");
+        // char c = io_queue_getchar(&keyboard_buffer);
+        // console_put_char(c);
+    }
 
     while (1);
 }
@@ -39,8 +37,8 @@ void *start(void *arg) {
     char *s = (char*)arg;
     
     while (true) {
-        mutex_lock(&mutex);
+        char c = io_queue_getchar(&keyboard_buffer);
         console_put_str(s);
-        mutex_unlock(&mutex);
+        console_put_char(c);
     }
 }

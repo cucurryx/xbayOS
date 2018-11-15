@@ -13,7 +13,7 @@ OBJS = $(TARGET_DIR)/main.o $(TARGET_DIR)/init.o $(TARGET_DIR)/interrupt.o \
       $(TARGET_DIR)/debug.o $(TARGET_DIR)/string.o $(TARGET_DIR)/bitmap.o \
 	  $(TARGET_DIR)/memory.o $(TARGET_DIR)/list.o $(TARGET_DIR)/thread.o	\
 	  $(TARGET_DIR)/switch.o $(TARGET_DIR)/lock.o $(TARGET_DIR)/console.o \
-	  $(TARGET_DIR)/keyboard.o
+	  $(TARGET_DIR)/keyboard.o $(TARGET_DIR)/io_queue.o
 
 $(TARGET_DIR)/main.o: kernel/main.c lib/print.h lib/stdint.h kernel/init.h
 	$(CC) $(CFLAGS) $< -o $@
@@ -56,6 +56,10 @@ $(TARGET_DIR)/console.o: device/console.c device/console.h thread/lock.c thread/
 $(TARGET_DIR)/keyboard.o: device/keyboard.c device/keyboard.c 
 	$(CC) $(CFLAGS) $< -o $@
 
+$(TARGET_DIR)/io_queue.o: device/io_queue.c device/io_queue.h kernel/debug.h kernel/debug.c
+	$(CC) $(CFLAGS) $< -o $@
+
+	
 
 $(TARGET_DIR)/kernel.o: kernel/kernel.S
 	$(AS) $(ASFLAGS) $< -o $@

@@ -12,7 +12,7 @@ a tiny operating system kernel (developing)
 - [x] memory management system
 - [x] kernel level thread
 - [x] locks
-- [ ] IO
+- [x] IO
 - [ ] user process
 - [ ] system call
 - [ ] heap memory
