@@ -13,7 +13,7 @@ a tiny operating system kernel (developing)
 - [x] kernel level thread
 - [x] locks
 - [x] IO
-- [ ] user process
+- [x] user process
 - [ ] system call
 - [ ] heap memory
 - [ ] hard disk driver

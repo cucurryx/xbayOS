@@ -1,14 +1,19 @@
 #ifndef __THREAD_THREAD_H
 #define __THREAD_THREAD_H
 
+#include "memory.h"
 #include "stdint.h"
 #include "list.h"
+
+#define DEFAULT_THREAD_PRIO 32
+#define PAGE_SIZE (1 << 12)
 
 typedef enum __task_status task_status;
 typedef struct __intr_stack intr_stack;
 typedef struct __thread_stack thread_stack;
 typedef struct __task_struct task_struct;
 typedef void* (*thread_func)(void*);
+
 
 //进程、线程状态
 enum __task_status {
@@ -74,6 +79,7 @@ struct __task_struct {
     list_node gene_list_tag;  //普通链表使用的tag
     list_node all_list_tag;   //专门给all_threads list使用的tag
     uint32_t* page_dir;       //指向页表。如果为线程则为NULL，如果为进程则指向自己的页目录表
+    virtual_addr user_vaddr;  //如果是进程，那么是该进程的用户虚拟内存池 
     uint32_t stack_magic_num; //线程魔数，用于边界检查，防止内核栈溢出覆盖task_struct数据
 };
 
@@ -87,5 +93,6 @@ void thread_init();
 void thread_block(task_status state);
 void thread_unblock(task_struct *thread);
 task_struct *node_to_task(list_node *node, node_type type);
+
 
 #endif // !__THREAD_THREAD_H

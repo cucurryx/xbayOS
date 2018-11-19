@@ -4,17 +4,13 @@
 #include "stdint.h"
 #include "bitmap.h"
 
+typedef struct __virtual_addr virtual_addr;
+typedef enum __pool_flags pool_flags;
+
 //virtual address pool
 struct __virtual_addr {
     bitmap vaddr_bitmap;
     uint32_t vaddr_start;
-};
-
-//physical address pool
-struct __pool {
-    bitmap pool_bitmap;
-    uint32_t phy_addr_start;
-    uint32_t pool_size;
 };
 
 enum __pool_flags {
@@ -29,14 +25,12 @@ enum __pool_flags {
 #define PG_US_S 0   //U/S属性，系统级
 #define PG_US_U 4   //U/S属性，用户级
 
-typedef struct __virtual_addr virtual_addr;
-typedef struct __pool pool;
-typedef enum __pool_flags pool_flags;
-
-extern pool kern_pool, user_pool;
 void mem_init();
 
 void *malloc_page(pool_flags type, uint32_t page_cnt);
 void *get_kern_pages(uint32_t page_cnt);
+void *get_user_pages(uint32_t page_cnt);
+void *get_page(pool_flags type, uint32_t vaddr);
+uint32_t vaddr_to_phy(uint32_t vaddr);
 
 #endif // !__KERNEL_MEMORY_H

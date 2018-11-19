@@ -1,9 +1,9 @@
 #include "thread.h"
 #include "string.h"
-#include "memory.h"
 #include "debug.h"
 #include "interrupt.h"
 #include "print.h"
+#include "process.h"
 
 task_struct *main_thread;       //主线程的task_struct
 list ready_thread_list;         //就绪任务队列
@@ -21,7 +21,7 @@ static void kthread(thread_func func, void *arg) {
 //设置main函数为主线程
 static void make_main_thread() {
     main_thread = running_thread();
-    task_struct_init(main_thread, "main thread", 32);
+    task_struct_init(main_thread, "main thread", DEFAULT_THREAD_PRIO);
 
     ASSERT(list_exist(&all_thread_list, &main_thread->all_list_tag) == false);
     list_push_back(&all_thread_list, &main_thread->all_list_tag);
@@ -122,6 +122,8 @@ void schedule() {
     task_struct *next_thread = node_to_task(temp_node, GENERAL_LIST_NODE);
     next_thread->status = RUNNING;
     
+    //如果下一个是进程，那么激活进程，更新页表和tss
+    process_activate(next_thread);
     switch_to(curr_thread, next_thread);
 }
 

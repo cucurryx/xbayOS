@@ -2,6 +2,7 @@
 #include "print.h"
 #include "debug.h"
 #include "string.h"
+#include "lock.h"
 
 //page size为4KB
 #define PAGE_SIZE (1 << 12)
@@ -18,6 +19,15 @@
 #define PDE_IDX(addr) ((addr & 0xffc00000) >> 22)
 #define PTE_IDX(addr) ((addr & 0x003ff000) >> 12)
 
+typedef struct __pool pool;
+
+//physical address pool
+struct __pool {
+    bitmap pool_bitmap;
+    uint32_t phy_addr_start;
+    uint32_t pool_size;
+    mutex_t mutex;
+};
 
 // kernel memory pool and user memory pool
 pool kern_pool, user_pool;
@@ -41,11 +51,13 @@ static void mem_pool_init(uint32_t all_mem) {
     uint32_t kp_start = used_mem;
     uint32_t up_start = kp_start + kern_free_pages * PAGE_SIZE;
 
+    mutex_init(&kern_pool.mutex);
     kern_pool.phy_addr_start = kp_start;
     kern_pool.pool_size = kern_free_pages * PAGE_SIZE;
     kern_pool.pool_bitmap.length = kbm_length;
     kern_pool.pool_bitmap.bits = (uint8_t*)MEM_BITMAP_BASE;
 
+    mutex_init(&user_pool.mutex);
     user_pool.phy_addr_start = up_start;
     user_pool.pool_size = user_free_pages * PAGE_SIZE;
     user_pool.pool_bitmap.length = ubm_length;
@@ -97,7 +109,18 @@ static void *vaddr_get(pool_flags type, uint32_t page_cnt) {
             return NULL;
         }
     } else {
-        //todo (user memory pool)
+        task_struct *curr_thread = running_thread();
+        virtual_addr *user_vaddr = &curr_thread->user_vaddr;
+        bit_position = bitmap_scan(&user_vaddr->vaddr_bitmap, page_cnt);
+        if (bit_position != -1) {
+            for (uint32_t i = 0; i < page_cnt; ++i) {
+                bitmap_set(&user_vaddr->vaddr_bitmap, bit_position + i);
+            }
+            res_start = user_vaddr->vaddr_start + bit_position * PAGE_SIZE;
+            ASSERT((uint32_t)res_start < (0xc0000000 - PAGE_SIZE));
+        } else {
+            return NULL;
+        }
     }
     return (void*)res_start;
 }
@@ -186,4 +209,52 @@ void *get_kern_pages(uint32_t page_cnt) {
         memset(vaddr, 0, page_cnt * PAGE_SIZE);
     }
     return vaddr;
+}
+
+//从用户物理内存池中分配page_cnt个页面的内存
+//并返回其虚拟地址
+void *get_user_pages(uint32_t page_cnt) {
+    mutex_lock(&user_pool.mutex);
+    void *vaddr = malloc_page(PF_USER, page_cnt);
+    if (vaddr != NULL) {
+        memset(vaddr, 0, page_cnt * PAGE_SIZE);
+    }
+    mutex_unlock(&user_pool.mutex);
+    return vaddr;
+}
+
+//将地址vaddr和type对应的物理地址池中的物理地址相关联
+void *get_page(pool_flags type, uint32_t vaddr) {
+    pool *mem_pool = (type == PF_KERNEL) ? &kern_pool : &user_pool;
+    mutex_lock(&mem_pool->mutex);
+
+    uint32_t bit_position = -1;
+    task_struct *curr_thread = running_thread();
+
+    if (type == PF_KERNEL && curr_thread->page_dir == NULL) {
+        bit_position = (vaddr - kern_vaddr.vaddr_start) / PAGE_SIZE;
+        ASSERT(bit_position > 0);
+        bitmap_set(&kern_vaddr.vaddr_bitmap, bit_position);
+    } else if (type == PF_USER && curr_thread->page_dir != NULL) {
+        bit_position = (vaddr - curr_thread->user_vaddr.vaddr_start) / PAGE_SIZE;
+        ASSERT(bit_position > 0);
+        bitmap_set(&curr_thread->user_vaddr.vaddr_bitmap, bit_position);
+    } else {
+        PANIC("neither userspace allocate nor kernel allocate!");
+    }
+
+    void *phyaddr = palloc(mem_pool);
+    if (phyaddr == NULL) {
+        return NULL;
+    }
+    page_table_add((void*)vaddr, phyaddr);
+    mutex_unlock(&mem_pool->mutex);
+    return (void*)vaddr;
+}
+
+//虚拟地址转化为物理地址
+//首先找到vaddr对应的页表，然后加上vaddr低12位的偏移量
+uint32_t vaddr_to_phy(uint32_t vaddr) {
+    uint32_t *pte = pte_ptr(vaddr);
+    return (*pte & 0xfffff000) + (vaddr & 0x00000fff);
 }

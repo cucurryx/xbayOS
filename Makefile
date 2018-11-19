@@ -3,7 +3,7 @@ KERNEL_ENTRY_POINT = 0xc0001500
 AS = nasm
 CC = gcc
 LD = ld 
-LIB = -I lib/ -I kernel/ -I device/ -I thread/
+LIB = -I lib/ -I kernel/ -I device/ -I thread/ -I proc/ 
 ASFLAGS = -f elf -I lib/include/
 CFLAGS = -Wall -Wmissing-prototypes -m32 -fno-stack-protector -fno-builtin $(LIB) -c
 LDFLAGS = -m elf_i386 -Ttext $(KERNEL_ENTRY_POINT) -e main -Map $(TARGET_DIR)/kernel.map
@@ -13,12 +13,13 @@ OBJS = $(TARGET_DIR)/main.o $(TARGET_DIR)/init.o $(TARGET_DIR)/interrupt.o \
       $(TARGET_DIR)/debug.o $(TARGET_DIR)/string.o $(TARGET_DIR)/bitmap.o \
 	  $(TARGET_DIR)/memory.o $(TARGET_DIR)/list.o $(TARGET_DIR)/thread.o	\
 	  $(TARGET_DIR)/switch.o $(TARGET_DIR)/lock.o $(TARGET_DIR)/console.o \
-	  $(TARGET_DIR)/keyboard.o $(TARGET_DIR)/io_queue.o
+	  $(TARGET_DIR)/keyboard.o $(TARGET_DIR)/io_queue.o $(TARGET_DIR)/tss.o \
+	  $(TARGET_DIR)/process.o
 
 $(TARGET_DIR)/main.o: kernel/main.c lib/print.h lib/stdint.h kernel/init.h
 	$(CC) $(CFLAGS) $< -o $@
 
-$(TARGET_DIR)/init.o: kernel/init.c kernel/init.h lib/print.h lib/stdint.h kernel/interrupt.h device/timer.h
+$(TARGET_DIR)/init.o: kernel/init.c kernel/init.h lib/print.h lib/stdint.h kernel/interrupt.h device/timer.h proc/tss.h
 	$(CC) $(CFLAGS) $< -o $@
 
 $(TARGET_DIR)/interrupt.o: kernel/interrupt.c kernel/interrupt.h lib/stdint.h kernel/global.h lib/io.h lib/print.h
@@ -41,7 +42,7 @@ $(TARGET_DIR)/memory.o: kernel/memory.c kernel/memory.h lib/bitmap.c lib/bitmap.
 
 $(TARGET_DIR)/thread.o: thread/thread.c thread/thread.h lib/stdint.h \
         kernel/global.h lib/bitmap.h kernel/memory.h lib/string.h \
-        lib/stdint.h lib/print.h kernel/interrupt.h kernel/debug.h 
+        lib/stdint.h lib/print.h kernel/interrupt.h
 	$(CC) $(CFLAGS) $< -o $@
 
 $(TARGET_DIR)/list.o: lib/list.c lib/list.h lib/stdint.h kernel/interrupt.h kernel/interrupt.c 
@@ -59,7 +60,12 @@ $(TARGET_DIR)/keyboard.o: device/keyboard.c device/keyboard.c
 $(TARGET_DIR)/io_queue.o: device/io_queue.c device/io_queue.h kernel/debug.h kernel/debug.c
 	$(CC) $(CFLAGS) $< -o $@
 
+$(TARGET_DIR)/tss.o: proc/tss.c proc/tss.h
+	$(CC) $(CFLAGS) $< -o $@
 	
+$(TARGET_DIR)/process.o: proc/process.c proc/process.h 	
+	$(CC) $(CFLAGS) $< -o $@
+
 
 $(TARGET_DIR)/kernel.o: kernel/kernel.S
 	$(AS) $(ASFLAGS) $< -o $@
