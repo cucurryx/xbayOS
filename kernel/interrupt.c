@@ -47,7 +47,7 @@ static void make_idt_desc(struct gate_desc* gdesc_ptr, uint8_t attr, intr_handle
     gdesc_ptr->selector = SELECTOR_K_CODE;
     gdesc_ptr->dcount = 0;
     gdesc_ptr->attribute = attr;
-    gdesc_ptr->func_offset_high_word = ((uint32_t)function >> 16) & 0xffff0000;
+    gdesc_ptr->func_offset_high_word = ((uint32_t)function >> 16) & 0x0000ffff;
 }
 
 //初始化中断描述符表
@@ -158,8 +158,8 @@ intr_stat intr_get_status() {
 
 //设置中断状态为status，返回旧状态
 intr_stat intr_set_status(intr_stat status) {
-    intr_stat old = intr_get_status();
-    if (old != status) {
+    intr_stat old;
+    if (intr_get_status() != status) {
         old == INTR_ON ? intr_disable() : intr_enable();
     }
     return old;
@@ -167,18 +167,24 @@ intr_stat intr_set_status(intr_stat status) {
 
 //打开中断，返回旧状态
 intr_stat intr_enable() {
-    intr_stat old_stat = intr_get_status();
-    if (old_stat == INTR_OFF) {
+    intr_stat old_stat;
+    if (intr_get_status() == INTR_OFF) {
+        old_stat = INTR_OFF;
         asm volatile("sti");
+    } else {
+        old_stat = INTR_ON;
     }
     return old_stat;
 }
 
 //关闭中断，返回旧状态
 intr_stat intr_disable() {
-    intr_stat old_stat = intr_get_status();
-    if (old_stat == INTR_ON) {
+    intr_stat old_stat;
+    if (intr_get_status() == INTR_ON) {
+        old_stat = INTR_ON;
         asm volatile("cli":::"memory");
+    } else {
+        old_stat = INTR_OFF;
     }
     return old_stat;
 }

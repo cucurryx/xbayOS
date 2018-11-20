@@ -70,7 +70,7 @@ typedef struct __gdt_desc {
 } gdt_desc;
 
 #define EFLAGS_MBS      (1 << 1)
-#define ELFAGS_IF_1     (1 << 9)
+#define EFLAGS_IF_1     (1 << 9)
 #define EFLAGS_IF_0     0
 #define EFLAGS_IOPL_3   (3 << 12)
 #define EFLAGS_IOPL_0   (0 << 12)

@@ -83,6 +83,11 @@ struct __task_struct {
     uint32_t stack_magic_num; //线程魔数，用于边界检查，防止内核栈溢出覆盖task_struct数据
 };
 
+
+task_struct *main_thread;       //主线程的task_struct
+list ready_thread_list;         //就绪任务队列
+list all_thread_list;           //所有任务队列
+
 void task_struct_init(task_struct *thread, char *name, int prio);
 void thread_create(task_struct *thread, thread_func func, void *func_args);
 task_struct *thread_start(char *name, int prio, thread_func func, void *func_args);

@@ -10,8 +10,6 @@
 
 //中断退出函数，用来从内核态进入用户态
 extern void intr_exit();
-extern list ready_thread_list;         //就绪任务队列
-extern list all_thread_list;           //所有任务队列
 
 //设置当前PCB，然后调用intr_exit进入用户态，启动进程
 void *start_process(void *prog) {
@@ -35,7 +33,7 @@ void *start_process(void *prog) {
     proc_context->fs = SELECTOR_U_DATA;
     proc_context->eip = (uint32_t)prog;
     proc_context->cs = SELECTOR_U_CODE;
-    proc_context->eflags = (EFLAGS_IOPL_0 | EFLAGS_MBS | ELFAGS_IF_1);
+    proc_context->eflags = (EFLAGS_IOPL_0 | EFLAGS_MBS | EFLAGS_IF_1);
     proc_context->esp = (uint32_t)get_page(PF_USER, USER_STACK_VADDR) + PAGE_SIZE;
     proc_context->ss = SELECTOR_U_DATA;
     asm volatile ("movl %0, %%esp;"
@@ -95,10 +93,16 @@ void process_activate(task_struct *thread) {
 
     //默认为内核自己的页目录表物理地址
     uint32_t pagedir_phy_addr = 0x100000;
+
     if (thread->page_dir != NULL) {
         pagedir_phy_addr = vaddr_to_phy((uint32_t)thread->page_dir);
-        set_tss_esp0(thread);
+        // set_tss_esp0(thread);
     }
     //更新cr3寄存器
     asm volatile ("movl %0, %%cr3" : : "r" (pagedir_phy_addr) : "memory");
+
+    if (thread->page_dir != NULL) {
+        // pagedir_phy_addr = vaddr_to_phy((uint32_t)thread->page_dir);
+        set_tss_esp0(thread);
+    }
 }

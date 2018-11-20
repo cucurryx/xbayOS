@@ -5,10 +5,6 @@
 #include "print.h"
 #include "process.h"
 
-task_struct *main_thread;       //主线程的task_struct
-list ready_thread_list;         //就绪任务队列
-list all_thread_list;           //所有任务队列
-
 extern void switch_to(task_struct *curr, task_struct *next);
 
 static void kthread(thread_func func, void *arg) {
@@ -125,6 +121,7 @@ void schedule() {
     //如果下一个是进程，那么激活进程，更新页表和tss
     process_activate(next_thread);
     switch_to(curr_thread, next_thread);
+
 }
 
 //保存curr的寄存器上下文，并将next的寄存器映像加载到寄存器中

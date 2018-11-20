@@ -20,15 +20,17 @@ int main() {
     init_all();
 
     process_execute(prog, "prog1");
-    process_execute(prog, "prog2");
+    // process_execute(prog, "prog2");
 
-    // thread_start("threa1", 16, start, (void*)"1_");
+    thread_start("threa1", 16, start, (void*)"1_");
     // thread_start("thread2", 16, start, (void*)"2_");
     intr_enable();
 
 
     while (1);
 }
+
+// time interrupt -> schedule -> switch_to -> kthread -> start_process -> prog
 
 void prog() {
     while (true) {
@@ -41,6 +43,5 @@ void *start(void *arg) {
     while (true) {
         console_put_str("0x");
         console_put_int(test_val);
-        // console_put_str("  ");
     }
 }
