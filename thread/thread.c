@@ -16,6 +16,7 @@ static pid_t next_pid = 0;
 static pid_t allocate_pid() {
     pid_t pid;
     mutex_lock(&pid_lock);
+    ASSERT(next_pid != 0xffff);
     pid = next_pid;
     ++next_pid;
     mutex_unlock(&pid_lock);

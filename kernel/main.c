@@ -40,42 +40,42 @@ int main() {
 // time interrupt -> schedule -> switch_to -> kthread -> start_process -> prog
 
 void prog1() {
-    pid_1 = getpid();
+    write("this is prog1");
     while (1);
 }
 
 void prog2() {
-    pid_2 = getpid();
+    write("this is prog2");
     while (1);
 }
 
 void prog3() {
-    pid_3 = getpid();
+    write("this is prog3");
     while (1);
 }
 
 void prog4() {
-    pid_4 = getpid();
+    write("this is prog4");
     while (1);
 }
 
 void *start(void *arg) {
 
-    while (1) {
-        console_put_str("the pid of prog1:");
-        console_put_int(pid_1);
-        console_put_char('\n');
-        console_put_str("the pid of prog2:");
-        console_put_int(pid_2);
-        console_put_char('\n');
-        console_put_str("the pid of prog3:");
-        console_put_int(pid_3);
-        console_put_char('\n');
-        console_put_str("the pid of prog4:");
-        console_put_int(pid_4);
-        console_put_char('\n');
-        console_put_char('\n');
-    }
+    // while (1) {
+    //     console_put_str("the pid of prog1:");
+    //     console_put_int(pid_1);
+    //     console_put_char('\n');
+    //     console_put_str("the pid of prog2:");
+    //     console_put_int(pid_2);
+    //     console_put_char('\n');
+    //     console_put_str("the pid of prog3:");
+    //     console_put_int(pid_3);
+    //     console_put_char('\n');
+    //     console_put_str("the pid of prog4:");
+    //     console_put_int(pid_4);
+    //     console_put_char('\n');
+    //     console_put_char('\n');
+    // }
 
 
     while (1);
