@@ -7,6 +7,7 @@
 #include "debug.h"
 #include "bitmap.h"
 #include "tss.h"
+#include "console.h"
 
 //中断退出函数，用来从内核态进入用户态
 extern void intr_exit();
@@ -36,9 +37,11 @@ void *start_process(void *prog) {
     proc_context->eflags = (EFLAGS_IOPL_0 | EFLAGS_MBS | EFLAGS_IF_1);
     proc_context->esp = (uint32_t)get_page(PF_USER, USER_STACK_VADDR) + PAGE_SIZE;
     proc_context->ss = SELECTOR_U_DATA;
+    
     asm volatile ("movl %0, %%esp;"
                   "jmp intr_exit"
                   :: "g" (proc_context) : "memory");
+
     return NULL;
 }
 

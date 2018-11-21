@@ -41,6 +41,30 @@ section .data
 %endmacro
 
 section .text
+extern syscall_table
+global syscall_handler
+;中断0x80会调用该函数作为中断入口程序
+syscall_handler:
+  push 0
+  push ds
+  push es
+  push fs 
+  push gs
+  pushad
+  push 0x80
+
+  ;在栈中压入通过寄存器传来的系统调用参数
+  push edx
+  push ecx
+  push ebx
+  
+  call [syscall_table + 4 * eax]
+  add esp, 12
+
+  ;子功能处理函数返回值在eax中，为了防止被覆盖，存入将会写入eax的栈的位置
+  mov [esp + 8*4], eax
+  jmp intr_exit
+  
 global intr_exit
 intr_exit:
   ;恢复寄存器上下文
@@ -52,6 +76,8 @@ intr_exit:
   pop ds
   add esp, 4
   iretd
+
+
 
 ;如果中断号没有error code，那么就push 0到栈里面
 VECTOR 0x00, ZERO

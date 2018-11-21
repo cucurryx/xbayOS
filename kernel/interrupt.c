@@ -5,7 +5,7 @@
 #include "stdint.h"
 #include "print.h"
 
-#define IDT_DESC_CNT 0x30 //支持的中断数
+#define IDT_DESC_CNT 0x81 //支持的中断数
 
 //8259A主片(master)的控制端口和数据端口
 #define PIC_M_CTRL 0x20
@@ -18,6 +18,7 @@
 #define EFLAGS_IF_BIT 0x00000200    //mask of if for eflags
 #define GET_EFLAGS(EFLAG_VAR) asm volatile("pushfl; popl %0" : "=g" (EFLAG_VAR))
 
+
 //中断门描述符
 struct gate_desc {
     uint16_t func_offset_low_word;      //中断处理程序在目标段内的偏移量的低16位
@@ -29,6 +30,7 @@ struct gate_desc {
 
 static struct gate_desc idt[IDT_DESC_CNT];
 extern intr_handler intr_entry_table[IDT_DESC_CNT];
+extern void syscall_handler();
 
 intr_handler idt_table[IDT_DESC_CNT];
 char* intr_name[IDT_DESC_CNT]; 
@@ -55,6 +57,9 @@ static void idt_desc_init() {
     for (int i = 0; i < IDT_DESC_CNT; ++i) {
         make_idt_desc(&idt[i], IDT_DESC_ATTR_DPL0, intr_entry_table[i]);
     }
+    
+    //设置0x80中断门描述符，进入syscall
+    make_idt_desc(&idt[0x80], IDT_DESC_ATTR_DPL3, syscall_handler);
 }
 
 static void pic_init() {
