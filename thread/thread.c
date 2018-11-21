@@ -4,8 +4,23 @@
 #include "interrupt.h"
 #include "print.h"
 #include "process.h"
+#include "lock.h"
 
 extern void switch_to(task_struct *curr, task_struct *next);
+
+//进程pid锁，防止多个进程同时修改pid
+static mutex_t pid_lock;
+static pid_t next_pid = 0;
+
+//获取一个pid
+static pid_t allocate_pid() {
+    pid_t pid;
+    mutex_lock(&pid_lock);
+    pid = next_pid;
+    ++next_pid;
+    mutex_unlock(&pid_lock);
+    return pid;
+}
 
 static void kthread(thread_func func, void *arg) {
     //因为直接从switch_to函数ret到此处
@@ -42,6 +57,7 @@ void task_struct_init(task_struct *thread, char *name, int prio) {
     strcpy(thread->name, name);
     thread->status = (thread == main_thread) ? RUNNING : READY;
     thread->priority = prio;
+    thread->pid = allocate_pid();
     thread->ava_time = prio;
     thread->elapsed_time = 0;
     thread->page_dir = NULL;
@@ -146,6 +162,7 @@ void schedule() {
 
 //做线程方面的初始化工作，设置主线程
 void thread_init() {
+    mutex_init(&pid_lock);
     list_init(&ready_thread_list);
     list_init(&all_thread_list);
     make_main_thread();
@@ -177,4 +194,9 @@ void thread_unblock(task_struct *thread) {
     thread->status = READY;
 
     INTERRUPT_RESTORE(status);
+}
+
+//获取任务thread的pid
+pid_t get_thread_pid(task_struct *thread) {
+    return thread->pid;
 }

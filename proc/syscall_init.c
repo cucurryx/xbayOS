@@ -1,7 +1,7 @@
 #include "syscall_init.h"
 #include "syscall.h"
 #include "stdint.h"
-
+#include "thread.h"
 
 #define SYSCALL_NR 32
 typedef void* syscall;
@@ -15,5 +15,5 @@ void syscall_init() {
 
 //系统实现的getpid
 uint16_t sys_getpid() {
-    return 0;
+    return get_thread_pid(running_thread());
 }

@@ -13,7 +13,7 @@ typedef struct __intr_stack intr_stack;
 typedef struct __thread_stack thread_stack;
 typedef struct __task_struct task_struct;
 typedef void* (*thread_func)(void*);
-
+typedef uint16_t pid_t;
 
 //进程、线程状态
 enum __task_status {
@@ -73,6 +73,7 @@ struct __task_struct {
     uint32_t *kstack;         //线程内核栈
     task_status status;       //线程状态
     uint8_t priority;         //线程调度优先级
+    pid_t pid;                //进程pid
     uint32_t ava_time;        //剩余可用的CPU时间
     uint32_t elapsed_time;    //该线程已经占用的CPU时间
     char name[16];            //线程名
@@ -98,6 +99,6 @@ void thread_init();
 void thread_block(task_status state);
 void thread_unblock(task_struct *thread);
 task_struct *node_to_task(list_node *node, node_type type);
-
+pid_t get_thread_pid(task_struct *thread);
 
 #endif // !__THREAD_THREAD_H
