@@ -49,7 +49,7 @@ char *strcpy(char *dest, const char *src) {
     ASSERT(src != NULL);
 
     char *d = dest, *s = (char*)src;
-    while (*d != '\0') {
+    while (*s != '\0') {
         *d = *s;
         ++d;
         ++s;

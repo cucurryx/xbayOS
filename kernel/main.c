@@ -12,6 +12,8 @@
 #include "io_queue.h"
 #include "process.h"
 #include "syscall.h"
+#include "stdio.h"
+
 
 void *start(void *arg);
 void prog1();
@@ -40,7 +42,11 @@ int main() {
 // time interrupt -> schedule -> switch_to -> kthread -> start_process -> prog
 
 void prog1() {
-    write("this is prog1");
+    for (int i = 0; i < 100; ++i) {
+        // printf("prog1 hello,");
+        printf("prog1:%x, %d <- %s", i, i, "test");
+        printf("%c", '\n');
+    }
     while (1);
 }
 
