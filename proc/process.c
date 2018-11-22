@@ -77,6 +77,7 @@ void process_execute(void *prog, char *name) {
     create_user_vaddr_bitmap(thread);
     thread_create(thread, (thread_func)start_process, prog);
     thread->page_dir = (uint32_t*)create_page_dir();
+    mem_block_init(thread->um_block_descs);
 
     intr_stat status;
     INTERRUPT_DISABLE(status);

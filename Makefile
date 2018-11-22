@@ -14,7 +14,8 @@ OBJS = $(TARGET_DIR)/main.o $(TARGET_DIR)/init.o $(TARGET_DIR)/interrupt.o \
 	  $(TARGET_DIR)/memory.o $(TARGET_DIR)/list.o $(TARGET_DIR)/thread.o	\
 	  $(TARGET_DIR)/switch.o $(TARGET_DIR)/lock.o $(TARGET_DIR)/console.o \
 	  $(TARGET_DIR)/keyboard.o $(TARGET_DIR)/io_queue.o $(TARGET_DIR)/tss.o \
-	  $(TARGET_DIR)/process.o
+	  $(TARGET_DIR)/process.o $(TARGET_DIR)/syscall.o $(TARGET_DIR)/syscall_init.o \
+	  $(TARGET_DIR)/stdio.o
 
 $(TARGET_DIR)/main.o: kernel/main.c lib/print.h lib/stdint.h kernel/init.h
 	$(CC) $(CFLAGS) $< -o $@
@@ -65,6 +66,16 @@ $(TARGET_DIR)/tss.o: proc/tss.c proc/tss.h
 	
 $(TARGET_DIR)/process.o: proc/process.c proc/process.h 	
 	$(CC) $(CFLAGS) $< -o $@
+
+$(TARGET_DIR)/syscall.o: lib/syscall.c lib/syscall.h
+	$(CC) $(CFLAGS) $< -o $@
+
+$(TARGET_DIR)/syscall_init.o: proc/syscall_init.c proc/syscall_init.h
+	$(CC) $(CFLAGS) $< -o $@
+
+$(TARGET_DIR)/stdio.o: lib/stdio.c lib/stdio.h
+	$(CC) $(CFLAGS) $< -o $@
+
 
 
 $(TARGET_DIR)/kernel.o: kernel/kernel.S

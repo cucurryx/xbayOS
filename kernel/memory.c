@@ -228,7 +228,9 @@ static void pfree(uint32_t paddr) {
 static void page_table_remove(uint32_t vaddr) {
     uint32_t *pde = pde_ptr(vaddr), *pte = pte_ptr(vaddr);
     ASSERT((*pde) & 0x1);
-    (*pte) &= PG_P_0;
+    (*pte) &= (~PG_P_1);
+    //更新TLB
+    asm volatile ("invlpg %0" :: "m" (vaddr) : "memory");
 }
 
 //在对应的虚拟内存池中，释放vaddr开始的page_cnt个页面
@@ -259,11 +261,12 @@ void free_page(pool_flags type, void *vaddr, uint32_t page_cnt) {
     uint32_t vaddr_to_delete = (uint32_t)vaddr;
     uint32_t paddr;
     vaddr_remove(type, vaddr, page_cnt);
+
     for (int i = 0; i < page_cnt; ++i) {
         paddr = vaddr_to_phy((uint32_t)vaddr_to_delete);
         pfree(paddr);
         page_table_remove((uint32_t)vaddr_to_delete);
-        paddr_to_delete += PAGE_SIZE;
+        vaddr_to_delete += PAGE_SIZE;
     }
 }
 
@@ -409,7 +412,6 @@ void *sys_malloc(uint32_t size) {
                 break;
             }
         }
-
         mem_block_desc *desc = &descs[i];
 
         if (list_empty(&desc->block_list)) {
@@ -426,12 +428,12 @@ void *sys_malloc(uint32_t size) {
 
             intr_stat status;
             INTERRUPT_DISABLE(status);
-            
-            for (int i = 0; i < descs[i].blocks_cnt; ++i) {
+
+            for (int i = 0; i < a->desc->blocks_cnt; ++i) {
                 mb = arena_to_block(a, i);
                 ASSERT(list_exist(&a->desc->block_list, &mb->block_node) == false);
                 list_push_back(&a->desc->block_list, &mb->block_node);
-            }
+            }  
 
             INTERRUPT_RESTORE(status);
         }
@@ -449,7 +451,44 @@ void *sys_malloc(uint32_t size) {
 
 //释放ptr指向的内存
 void sys_free(void *ptr) {
+    ASSERT(ptr != NULL);
+    pool *mem_pool;
+    pool_flags type;
 
+    if (running_thread()->page_dir == NULL) {
+        type = PF_KERNEL;
+        mem_pool = &kern_pool;
+    } else {    //user
+        type = PF_USER;
+        mem_pool = &user_pool;
+    }
+
+    mutex_lock(&mem_pool->mutex);
+
+    mem_block *mb;
+    arena *a;
+
+    mb = (mem_block*)ptr;
+    a = block_to_arena(mb);
+
+    if (a->large) {
+        free_page(type, a, a->cnt);
+    } else {
+        list_push_back(&a->desc->block_list, &mb->block_node);
+        ++a->cnt;
+
+        //if all memblocks of arena is free, free this arena
+        if (a->cnt == a->desc->blocks_cnt) {
+            for (int i = 0; i < a->cnt; ++i) {
+                mb = arena_to_block(a, i);
+                if (list_exist(&a->desc->block_list, &mb->block_node)) {
+                    list_remove(&mb->block_node);
+                }
+            }
+            free_page(type, a, 1);
+        }
+    }
+    mutex_unlock(&mem_pool->mutex);
 }
 
 //entry of memory management

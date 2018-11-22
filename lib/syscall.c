@@ -58,3 +58,11 @@ uint16_t getpid() {
 uint32_t write(char *s) {
     return _syscall1(SYS_WRITE, s);
 }
+
+void *malloc(uint32_t size) {
+    return (void*)_syscall1(SYS_MALLOC, size);
+}
+
+void free(void *p) {
+    _syscall1(SYS_FREE, p);
+}

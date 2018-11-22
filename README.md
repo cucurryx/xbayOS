@@ -14,8 +14,8 @@ a tiny operating system kernel (developing)
 - [x] locks
 - [x] IO
 - [x] user process
-- [ ] system call
-- [ ] heap memory
+- [x] system call
+- [x] heap memory
 - [ ] hard disk driver
 - [ ] file system
 - [ ] fork, read, shell, exec, balabala...

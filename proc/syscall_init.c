@@ -2,6 +2,7 @@
 #include "syscall.h"
 #include "stdint.h"
 #include "thread.h"
+#include "memory.h"
 #include "console.h"
 
 #define SYSCALL_NR 32
@@ -13,6 +14,8 @@ syscall syscall_table[SYSCALL_NR];
 void syscall_init() {
     syscall_table[SYS_GETPID] = (void*)sys_getpid;
     syscall_table[SYS_WRITE] = (void*)sys_write;
+    syscall_table[SYS_MALLOC] = (void*)sys_malloc;
+    syscall_table[SYS_FREE] = (void*)sys_free;
 }
 
 //系统实现的getpid

@@ -26,8 +26,8 @@ uint32_t pid_1 = -1, pid_2 = -1, pid_3 = -1, pid_4 = -1;
 
 int main() {
     init_all();
-    // process_execute(prog1, "prog1");
-    // process_execute(prog2, "prog2");
+    process_execute(prog1, "prog1");
+    process_execute(prog2, "prog2");
     // process_execute(prog3, "prog3");
     // process_execute(prog4, "prog4");
 
@@ -44,16 +44,28 @@ int main() {
 // time interrupt -> schedule -> switch_to -> kthread -> start_process -> prog
 
 void prog1() {
-    for (int i = 0; i < 100; ++i) {
-        // printf("prog1 hello,");
-        printf("prog1:%x, %d <- %s", i, i, "test");
-        printf("%c", '\n');
+    uint32_t size = 11;
+    for (int i = 0; i < 7; ++i) {
+        printf("[proc1] addr: 0x%x\n", (uint32_t)malloc(size));
+        printf("[proc1] addr: 0x%x\n", (uint32_t)malloc(size));
+        printf("[proc1] addr: 0x%x\n", (uint32_t)malloc(size));
+        printf("[proc1] addr: 0x%x\n", (uint32_t)malloc(size));
+
+        size *= 2;
     }
     while (1);
 }
 
 void prog2() {
-    write("this is prog2");
+    uint32_t size = 11;
+    for (int i = 0; i < 7; ++i) {
+        printf("[proc2] addr: 0x%x\n", (uint32_t)malloc(size));
+        printf("[proc2] addr: 0x%x\n", (uint32_t)malloc(size));
+        printf("[proc2] addr: 0x%x\n", (uint32_t)malloc(size));
+        printf("[proc2] addr: 0x%x\n", (uint32_t)malloc(size));
+
+        size *= 2;
+    }
     while (1);
 }
 
@@ -68,21 +80,9 @@ void prog4() {
 }
 
 void *start1(void *arg) {
-
-    void *addr = sys_malloc(33);
-    console_put_str("thread a, sys_malloc(33), addr is 0x");
-    console_put_int((uint32_t)addr);
-    console_put_char('\n');
-
     while (1);
 }
 
 void *start2(void *arg) {
-
-    void *addr = sys_malloc(33);
-    console_put_str("thread b, sys_malloc(33), addr is 0x");
-    console_put_int((uint32_t)addr);
-    console_put_char('\n');
-
     while (1);
 }
