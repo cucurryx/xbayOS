@@ -3,14 +3,30 @@
 
 #include "stdint.h"
 #include "bitmap.h"
+#include "list.h"
+
+//不同大小内存块种类数量
+#define MEM_BLOCK_DESC_CNT 7
 
 typedef struct __virtual_addr virtual_addr;
 typedef enum __pool_flags pool_flags;
+typedef struct __mem_block mem_block;
+typedef struct __mem_block_desc mem_block_desc;
 
 //virtual address pool
 struct __virtual_addr {
     bitmap vaddr_bitmap;
     uint32_t vaddr_start;
+};
+
+struct __mem_block {
+    list_node block_node;
+};
+
+struct __mem_block_desc {
+    list block_list;
+    uint32_t block_size;
+    uint32_t blocks_cnt;
 };
 
 enum __pool_flags {
@@ -32,5 +48,7 @@ void *get_kern_pages(uint32_t page_cnt);
 void *get_user_pages(uint32_t page_cnt);
 void *get_page(pool_flags type, uint32_t vaddr);
 uint32_t vaddr_to_phy(uint32_t vaddr);
+void mem_block_init(mem_block_desc *descs);
+void *sys_malloc(uint32_t size);
 
 #endif // !__KERNEL_MEMORY_H

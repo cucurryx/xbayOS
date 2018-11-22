@@ -83,7 +83,7 @@ uint32_t vsprintf(char *str, const char *format, va_list args) {
     return strlen(str);
 }
 
-//实现格式化打印
+//实现格式化打印到标准输出
 uint32_t printf(const char *format, ...) {
     va_list args;
     char str[1024];
@@ -93,4 +93,14 @@ uint32_t printf(const char *format, ...) {
     vsprintf(str, format, args);
     va_end(args);
     return write(str);
+}
+
+//实现格式化打印到字符串
+uint32_t sprintf(char *s, const char *format, ...) {
+    uint32_t len;
+    va_list args;
+    va_start(args, format);
+    len = vsprintf(s, format, args);
+    va_end(args);
+    return len; 
 }

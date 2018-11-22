@@ -81,6 +81,7 @@ struct __task_struct {
     list_node all_list_tag;   //专门给all_threads list使用的tag
     uint32_t* page_dir;       //指向页表。如果为线程则为NULL，如果为进程则指向自己的页目录表
     virtual_addr user_vaddr;  //如果是进程，那么是该进程的用户虚拟内存池 
+    mem_block_desc um_block_descs[MEM_BLOCK_DESC_CNT]; //用户空间的内存块描述符数组
     uint32_t stack_magic_num; //线程魔数，用于边界检查，防止内核栈溢出覆盖task_struct数据
 };
 

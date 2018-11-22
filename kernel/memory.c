@@ -3,6 +3,9 @@
 #include "debug.h"
 #include "string.h"
 #include "lock.h"
+#include "interrupt.h"
+#include "debug.h"
+#include "global.h"
 
 //page size为4KB
 #define PAGE_SIZE (1 << 12)
@@ -19,7 +22,9 @@
 #define PDE_IDX(addr) ((addr & 0xffc00000) >> 22)
 #define PTE_IDX(addr) ((addr & 0x003ff000) >> 12)
 
+
 typedef struct __pool pool;
+typedef struct __arena arena;
 
 //physical address pool
 struct __pool {
@@ -28,6 +33,15 @@ struct __pool {
     uint32_t pool_size;
     mutex_t mutex;
 };
+
+struct __arena {
+    mem_block_desc *desc;
+    uint32_t cnt;
+    bool large;
+};
+
+//kernel memory block array
+mem_block_desc km_block_descs[MEM_BLOCK_DESC_CNT];
 
 // kernel memory pool and user memory pool
 pool kern_pool, user_pool;
@@ -85,14 +99,6 @@ static void mem_pool_init(uint32_t all_mem) {
     bitmap_init(&kern_vaddr.vaddr_bitmap, kern_vaddr.vaddr_bitmap.length);
 
     put_str("mempool init done\n");
-}
-
-//entry of memory management
-void mem_init() {
-    put_str("mem_init start\n");
-    uint32_t mem_bytes_total = (*(uint32_t*)(0xb00)); //已经在loader中计算得出，放在0xb00
-    mem_pool_init(mem_bytes_total);
-    put_str("mem_init done\n");
 }
 
 //在虚拟内存中申请page_cnt个虚拟页，返回虚拟页的起始地址
@@ -257,4 +263,135 @@ void *get_page(pool_flags type, uint32_t vaddr) {
 uint32_t vaddr_to_phy(uint32_t vaddr) {
     uint32_t *pte = pte_ptr(vaddr);
     return (*pte & 0xfffff000) + (vaddr & 0x00000fff);
+}
+
+//初始化内存块描述符数组(16、32、64、128、256、512、1024)
+void mem_block_init(mem_block_desc *descs) {
+    uint16_t  blk_size = 16;
+    for (int i = 0; i < MEM_BLOCK_DESC_CNT; ++i) {
+        descs[i].block_size = blk_size;
+        descs[i].blocks_cnt = (PAGE_SIZE - sizeof(arena)) / blk_size;
+        list_init(&descs[i].block_list);
+        blk_size <<= 1;
+    }
+}
+
+//返回arena中第idx个内存块的地址
+static mem_block *arena_to_block(arena *a, uint32_t idx) {
+    uint32_t first_block = (uint32_t)a + sizeof(arena);
+    return (mem_block*)(first_block + idx * a->desc->block_size);
+}
+
+//返回内存块b所在arena的地址
+static arena *block_to_arena(mem_block *b) {
+    return (arena*)((uint32_t)b & 0xfffff000);
+}
+
+//根据block_node返回对应的mem_block
+static mem_block *node_to_block(list_node *block_node) {
+    return (mem_block*)block_node;
+}
+
+//申请size大小的堆内存，内核实现
+void *sys_malloc(uint32_t size) {
+    task_struct *curr = running_thread();
+    uint32_t pool_size;
+    mem_block_desc *descs;
+    pool *mem_pool;
+    pool_flags flag;
+
+    if (curr->page_dir == NULL) {
+        flag = PF_KERNEL;
+        descs = km_block_descs;
+        mem_pool = &kern_pool;
+        pool_size = kern_pool.pool_size;
+    } else {
+        flag = PF_USER;
+        descs = curr->um_block_descs;
+        mem_pool = &user_pool;
+        pool_size = user_pool.pool_size;
+    }
+
+    // no more memory
+    if (size < 0 || size > pool_size) {
+        return NULL;
+    }
+
+    arena *a;
+    mem_block *mb;
+
+    mutex_lock(&mem_pool->mutex);
+
+    if (size > 1024) {
+        uint32_t page_cnt = DIV_ROUND_UP(size + sizeof(arena), PAGE_SIZE);
+        
+        a = (arena*)malloc_page(flag, page_cnt);
+
+        if (a == NULL) {
+            mutex_unlock(&mem_pool->mutex);
+            return NULL;
+        }
+
+        memset(a, 0, page_cnt * PAGE_SIZE);
+        a->desc = NULL;
+        a->cnt = page_cnt;
+        a->large = true;
+        mutex_unlock(&mem_pool->mutex);
+
+        //arena最开头是arena元信息
+        return (void*)((uint32_t)a + sizeof(arena));
+
+    } else {
+        uint8_t i;
+        for (i = 0; i < MEM_BLOCK_DESC_CNT; ++i) {
+            if (size <= descs[i].block_size) {
+                break;
+            }
+        }
+
+        mem_block_desc *desc = &descs[i];
+
+        if (list_empty(&desc->block_list)) {
+            a = (arena*)malloc_page(flag, 1);
+            if (a == NULL) {
+                mutex_unlock(&mem_pool->mutex);
+                return NULL;
+            }
+            memset(a, 0, PAGE_SIZE);
+
+            a->desc = &descs[i];
+            a->large = false;
+            a->cnt = descs[i].blocks_cnt;
+
+            intr_stat status;
+            INTERRUPT_DISABLE(status);
+            
+            for (int i = 0; i < descs[i].blocks_cnt; ++i) {
+                mb = arena_to_block(a, i);
+                ASSERT(list_exist(&a->desc->block_list, &mb->block_node) == false);
+                list_push_back(&a->desc->block_list, &mb->block_node);
+            }
+
+            INTERRUPT_RESTORE(status);
+        }
+        
+        mb = node_to_block(list_pop_front(&desc->block_list));
+        memset(mb, 0, desc->block_size);
+        
+        a = block_to_arena(mb);
+        --a->cnt;
+
+        mutex_unlock(&mem_pool->mutex);
+        return (void*)mb;
+    }
+}
+
+
+//entry of memory management
+void mem_init() {
+    put_str("mem_init start\n");
+    uint32_t mem_bytes_total = (*(uint32_t*)(0xb00)); //已经在loader中计算得出，放在0xb00
+    mem_pool_init(mem_bytes_total);
+    mem_block_init(km_block_descs);
+    put_str("mem_init done\n");
 }

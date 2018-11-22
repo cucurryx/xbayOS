@@ -15,7 +15,8 @@
 #include "stdio.h"
 
 
-void *start(void *arg);
+void *start1(void *arg);
+void *start2(void *arg);
 void prog1();
 void prog2();
 void prog3();
@@ -25,16 +26,17 @@ uint32_t pid_1 = -1, pid_2 = -1, pid_3 = -1, pid_4 = -1;
 
 int main() {
     init_all();
-    process_execute(prog1, "prog1");
-    process_execute(prog2, "prog2");
-    process_execute(prog3, "prog3");
-    process_execute(prog4, "prog4");
+    // process_execute(prog1, "prog1");
+    // process_execute(prog2, "prog2");
+    // process_execute(prog3, "prog3");
+    // process_execute(prog4, "prog4");
 
-
+    thread_start("threa1", 16, start1, (void*)"1_");
+    thread_start("thread2", 16, start2, (void*)"2_");
+    
     intr_enable();
 
-    // thread_start("threa1", 16, start, (void*)"1_");
-    thread_start("thread2", 16, start, (void*)"2_");
+
 
     while (1);
 }
@@ -65,24 +67,22 @@ void prog4() {
     while (1);
 }
 
-void *start(void *arg) {
+void *start1(void *arg) {
 
-    // while (1) {
-    //     console_put_str("the pid of prog1:");
-    //     console_put_int(pid_1);
-    //     console_put_char('\n');
-    //     console_put_str("the pid of prog2:");
-    //     console_put_int(pid_2);
-    //     console_put_char('\n');
-    //     console_put_str("the pid of prog3:");
-    //     console_put_int(pid_3);
-    //     console_put_char('\n');
-    //     console_put_str("the pid of prog4:");
-    //     console_put_int(pid_4);
-    //     console_put_char('\n');
-    //     console_put_char('\n');
-    // }
+    void *addr = sys_malloc(33);
+    console_put_str("thread a, sys_malloc(33), addr is 0x");
+    console_put_int((uint32_t)addr);
+    console_put_char('\n');
 
+    while (1);
+}
+
+void *start2(void *arg) {
+
+    void *addr = sys_malloc(33);
+    console_put_str("thread b, sys_malloc(33), addr is 0x");
+    console_put_int((uint32_t)addr);
+    console_put_char('\n');
 
     while (1);
 }
