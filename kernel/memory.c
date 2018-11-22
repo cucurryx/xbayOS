@@ -207,6 +207,67 @@ void *malloc_page(pool_flags type, uint32_t page_cnt) {
     return vaddr_start;
 }
 
+//将paddr指向的页，从对应的物理内存池中释放
+static void pfree(uint32_t paddr) {
+    pool *po;
+    int bit_position;
+
+    if (running_thread()->page_dir == NULL) {
+        po = &kern_pool;
+    } else {
+        po = &user_pool;
+    }
+
+    mutex_lock(&po->mutex);
+    bit_position = (paddr - po->phy_addr_start) / PAGE_SIZE;
+    bitmap_clear(&po->pool_bitmap, bit_position);
+    mutex_unlock(&po->mutex);
+}
+
+//将虚拟地址vaddr对应的pte的P位置为0
+static void page_table_remove(uint32_t vaddr) {
+    uint32_t *pde = pde_ptr(vaddr), *pte = pte_ptr(vaddr);
+    ASSERT((*pde) & 0x1);
+    (*pte) &= PG_P_0;
+}
+
+//在对应的虚拟内存池中，释放vaddr开始的page_cnt个页面
+static void vaddr_remove(pool_flags type, void *vaddr, uint32_t page_cnt) {
+    ASSERT(page_cnt > 0);
+    ASSERT(page_cnt < 3840);
+    
+    if (vaddr == NULL) {
+        return;
+    }
+
+    virtual_addr *vaddr_pool;
+
+    if (type == PF_KERNEL) {
+        vaddr_pool = &kern_vaddr;
+    } else {
+        vaddr_pool = &(running_thread()->user_vaddr);
+    }
+
+    uint32_t bit_position = ((uint32_t)vaddr - vaddr_pool->vaddr_start) / PAGE_SIZE;
+    for (int i = 0; i < page_cnt; ++i) {
+        bitmap_clear(&vaddr_pool->vaddr_bitmap, bit_position + i);
+    }
+}
+
+//释放虚拟地址vaddr，处理虚拟内存池、物理内存池和页表
+void free_page(pool_flags type, void *vaddr, uint32_t page_cnt) {
+    uint32_t vaddr_to_delete = (uint32_t)vaddr;
+    uint32_t paddr;
+    vaddr_remove(type, vaddr, page_cnt);
+    for (int i = 0; i < page_cnt; ++i) {
+        paddr = vaddr_to_phy((uint32_t)vaddr_to_delete);
+        pfree(paddr);
+        page_table_remove((uint32_t)vaddr_to_delete);
+        paddr_to_delete += PAGE_SIZE;
+    }
+}
+
+
 //从内核物理池中申请page_cnt个页的内存
 //如果成功，返回其虚拟地址，否则返回NULL
 void *get_kern_pages(uint32_t page_cnt) {
@@ -386,6 +447,10 @@ void *sys_malloc(uint32_t size) {
     }
 }
 
+//释放ptr指向的内存
+void sys_free(void *ptr) {
+
+}
 
 //entry of memory management
 void mem_init() {
