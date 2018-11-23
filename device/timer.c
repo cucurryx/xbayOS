@@ -19,6 +19,7 @@
 //内核态和用户态总共的CPU时间
 uint32_t total_times;
 
+
 //设置频率，将操作的计数器号、读写锁属性、计数器模式写入模式控制寄存器
 static void set_frequency(uint8_t port, uint16_t no,uint16_t rw, 
                           uint16_t mode, uint16_t value) {
@@ -31,6 +32,7 @@ static void time_intr_handler() {
     ASSERT(intr_get_status() == INTR_OFF);
 
     task_struct *curr_thread = running_thread();
+
     ASSERT(curr_thread->stack_magic_num == 0x19980312);
 
     ++curr_thread->elapsed_time;
