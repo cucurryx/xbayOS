@@ -9,7 +9,7 @@
 #define NAME_LEN 8
 #define PRIM_PARTS_CNT 4
 #define LOGIC_PARTS_CNT 8
-#define  2
+#define CHANNEL_DEVICE_CNT 2
 
 typedef struct __partition partition;
 typedef struct __disk disk;

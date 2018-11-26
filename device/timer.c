@@ -5,7 +5,8 @@
 #include "interrupt.h"
 #include "thread.h"
 #include "debug.h"
-
+#include "global.h"
+#include <printk.h>
 
 #define IRQ0_FREQUENCY   100 //频率
 #define INPUT_FREQUENCY  1193180
@@ -15,6 +16,7 @@
 #define COUNTER_MODE     2
 #define RW_LATCH         3
 #define PIT_CONTROL_PORT 0x43
+#define TICKS_PER_SECOND 100000
 
 //内核态和用户态总共的CPU时间
 uint32_t total_times;
@@ -44,6 +46,26 @@ static void time_intr_handler() {
     } else {
         --curr_thread->ava_time;
     }
+}
+
+//按照ticks来睡眠，如果当前时间没有到时间，那么挂起当前线程
+static void sleep_by_ticks(uint32_t t) {
+    uint32_t start = total_times;
+    while (start + t > total_times) {
+        thread_yield();
+    }
+}
+
+//以毫秒为单位来睡眠
+void sleep_by_msecond(uint32_t ms) {
+    uint32_t ticks = DIV_ROUND_UP(ms * TICKS_PER_SECOND, 1000);
+    sleep_by_ticks(ticks);
+}
+
+//以秒为单位来睡眠
+void sleep_by_second(uint32_t s) {
+    uint32_t ticks = s * TICKS_PER_SECOND;
+    sleep_by_ticks(ticks);
 }
 
 void timer_init() {
