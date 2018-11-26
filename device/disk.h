@@ -52,5 +52,8 @@ struct __ide_channel {
 };
 
 void ide_channel_init();
+void ide_read(disk *d, uint32_t lba, void *buf, uint32_t cnt);
+void ide_write(disk *d, uint32_t lba, void *buf, uint32_t cnt);
+void disk_intr_handler(uint8_t irq);
 
 #endif // !__DEVICE          _DISK_H

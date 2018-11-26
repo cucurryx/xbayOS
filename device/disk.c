@@ -3,6 +3,7 @@
 #include <io.h>
 #include <debug.h>
 #include <timer.h>
+#include <stdio.h>
 
 //获取channel对应的IO port
 #define RW_DATA(channel)             (channel->start_port + 0x0)
@@ -30,7 +31,6 @@
 #define CMD_READ_SECTOR     0x20
 #define CMD_WRITE_SECTOR    0x30
 #define BYTES_PER_SECTOR    512
-
 
 #define MAX_LBA  ((80 * 1024 * 1024 / 512) - 1)
 
@@ -123,4 +123,81 @@ static bool spin_wait(disk *d) {
         ms -= 10;
     }
     return false;
+}
+
+//从硬盘中，以lba为扇区起始地址，读取cnt个扇区的数据到buf中
+void ide_read(disk *d, uint32_t lba, void *buf, uint32_t cnt) {
+    ide_channel *channel = d->channel;
+    mutex_lock(&channel->mutex);
+
+    select_disk(d);
+
+    uint32_t offset = 0;
+    while (offset < cnt) {
+        //磁盘一次最多读取256个扇区，尽可能读取256
+        uint32_t curr_cnt = (offset + 256 < cnt) ? (cnt - offset) : 256;
+        count_out(d, curr_cnt);
+        select_sector(d, lba + offset);
+        send_cmd(channel, CMD_READ_SECTOR);
+
+        //此处需要等待中断信号
+        sem_down(&channel->sem);
+        if (spin_wait(d) == false) {
+            char error[128];
+            sprintf(error, "%s read sector %d failed!\n", d->name, lba);
+            PANIC(error);
+        }
+
+        void *curr_buf = (void*)((uint32_t)buf + offset * BYTES_PER_SECTOR);
+        disk_read(d, curr_buf, curr_cnt);
+        offset += curr_cnt;
+    }
+
+    mutex_unlock(&channel->mutex);
+}
+
+//将buf中的数据，写入到以磁盘中以lba为扇区起始地址的cnt个扇区的磁盘空间中
+void ide_write(disk *d, uint32_t lba, void *buf, uint32_t cnt) {
+    ide_channel *channel = d->channel;
+    mutex_lock(&channel->mutex);
+
+    select_disk(d);
+
+    uint32_t offset = 0;
+    while (offset < cnt) {
+        uint32_t curr_cnt = (offset + 256 < cnt) ? (cnt - offset) : 256;
+        count_out(d, curr_cnt);
+        select_sector(d, lba + offset);
+        send_cmd(channel, CMD_WRITE_SECTOR);
+
+        //检测硬盘是否可用
+        if (spin_wait(d) == false) {
+            char error[128];
+            sprintf(error, "%s read sector %d failed!\n", d->name, lba);
+            PANIC(error);
+        }
+
+        void *curr_buf = (void*)((uint32_t)buf + offset * BYTES_PER_SECTOR);
+        disk_write(d, curr_buf, curr_cnt);
+        sem_down(&channel->sem);
+
+        offset += curr_cnt;
+    }
+
+    mutex_unlock(&channel->mutex);
+}
+
+//磁盘中断处理程序
+void disk_intr_handler(uint8_t irq) {
+    uint8_t no = irq - 0x2e;
+    ASSERT(no == 0 || no == 1);
+
+    ide_channel *channel = &channels[no];
+    if (channel->waiting_intr) {
+        sem_up(&channel->sem);
+        channel->waiting_intr = false;
+
+        //通知磁盘控制器，以及完成当前工作，可以进行其他任务
+        inb(R_STATUS_W_CMD(channel)); 
+    }
 }
