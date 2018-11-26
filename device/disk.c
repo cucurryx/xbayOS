@@ -4,6 +4,8 @@
 #include <debug.h>
 #include <timer.h>
 #include <stdio.h>
+#include <printk.h>
+#include <interrupt.h>
 
 //获取channel对应的IO port
 #define RW_DATA(channel)             (channel->start_port + 0x0)
@@ -38,28 +40,15 @@
 uint8_t channel_cnt;
 ide_channel channels[CHANNEL_DEVICE_CNT];
 
-void ide_channel_init() {
-    uint8_t disk_cnt = *((uint8_t*)DISK_CNT_POINTER);
-    channel_cnt = DIV_ROUND_UP(disk_cnt, 2);
+//总扩展分区的lba起始地址
+int32_t ext_lba_base = 0;
 
-    ide_channel *channel;
-    for (int i = 0; i < channel_cnt; ++i) {
-        channel = &channels[i];
+//记录硬盘主分区和逻辑分区的下标
+uint8_t master_no = 0, logical_no = 0;
 
-        if (i == 0) {
-            //channel0，对应从片IRQ14
-            channel->start_port = 0x1f0;
-            channel->irq_no = 0x20 + 14;
-        } else if (i == 1) {
-            //channel1，对应从片IRQ15
-            channel->start_port = 0x170;
-            channel->irq_no = 0x20 + 15;
-        }
-        channel->waiting_intr = false;
-        mutex_init(&channel->mutex);
-        sem_init(&channel->sem, 0);    
-    }
-}
+//分区队列
+list partition_list;
+
 
 //根据传入的disk，通过其对应的channel，给响应IO端口写入数据，选择读写的硬盘
 static void select_disk(disk *d) {
@@ -187,6 +176,58 @@ void ide_write(disk *d, uint32_t lba, void *buf, uint32_t cnt) {
     mutex_unlock(&channel->mutex);
 }
 
+//将以word为单位的数据转换为字节序为小端序的数据
+//用于将identify命令获取的硬盘信息（以字为单位）的处理
+static void word_to_bytes(const char *src, char *buf, uint32_t len) {
+    for (int i = 0; i < len; i += 2) {
+        buf[i+1] = src[i];
+        buf[i] = src[i+1];
+    }
+    buf[len] = '\0';
+}
+
+//获取硬盘参数信息
+static void print_disk_info(disk *d) {
+    char info[BYTES_PER_SECTOR];
+    select_disk(d);
+    send_cmd(d->channel, CMD_IDENTIFY);
+    sem_down(&d->channel->sem);
+    
+    if (spin_wait(d) == false) {
+        char error[128];
+        sprintf(error, "%s identify command failed!\n", d->name);
+        PANIC(error);
+    }
+
+    disk_read(d, info, 1);
+
+    //只需要identify命令返回数据的前64bytes
+    char buf[64];
+    uint32_t seq_no_start = 10 * 2, seq_no_len = 20;
+    word_to_bytes(info + seq_no_start, buf, seq_no_len);
+    printk("disk %s information :\n", d->name);
+    printk("Sequence Number: %s\n", buf);
+
+    uint32_t type_no_start = 27 * 2, type_no_len = 40;
+    memset(buf, 0, 64);
+    word_to_bytes(info + type_no_start, buf, type_no_len);
+    printk("Type Number: %s\n", buf);
+
+    uint32_t sectors = *(uint32_t*)(info + 60 * 2);
+    printk("Sectors: %d\n", sectors);
+    printk("Capacity: %dMB\n", sectors * BYTES_PER_SECTOR / 1024 / 1024);
+}
+
+//扫描磁盘中地址为lba的扇区中的所有分区
+static void scan_partition(disk *d, uint32_t lba) {
+
+}
+
+//打印磁盘分区信息
+static bool print_partition_info(list_node *node, int arg) {
+
+}
+
 //磁盘中断处理程序
 void disk_intr_handler(uint8_t irq) {
     uint8_t no = irq - 0x2e;
@@ -199,5 +240,48 @@ void disk_intr_handler(uint8_t irq) {
 
         //通知磁盘控制器，以及完成当前工作，可以进行其他任务
         inb(R_STATUS_W_CMD(channel)); 
+    }
+}
+
+void ide_channel_init() {
+    uint8_t disk_cnt = *((uint8_t*)DISK_CNT_POINTER);
+    channel_cnt = DIV_ROUND_UP(disk_cnt, 2);
+
+    printk("ide start\n");
+    ide_channel *channel;
+    for (int i = 0; i < channel_cnt; ++i) {
+        channel = &channels[i];
+
+        if (i == 0) {
+            //channel0，对应从片IRQ14
+            channel->start_port = 0x1f0;
+            channel->irq_no = 0x20 + 14;
+        }
+        if (i == 1) {
+            //channel1，对应从片IRQ15
+            channel->start_port = 0x170;
+            channel->irq_no = 0x20 + 15;
+        }
+
+        channel->waiting_intr = false;
+        mutex_init(&channel->mutex);
+        sem_init(&channel->sem, 0);
+        intr_set_handler(channel->irq_no, disk_intr_handler);
+
+        for (int j = 0; j < 2; ++j) {
+            disk *d = &channel->devices[j];
+            d->channel = channel;
+            d->no = j;
+            sprintf(d->name, "sd%c", 'a' + i * 2 + j);
+
+            print_disk_info(d);
+
+            //slave disk
+            if (d->no != 0) {
+                scan_partition(d, 0);
+            }
+            master_no = 0;
+            logical_no = 0;
+        }
     }
 }

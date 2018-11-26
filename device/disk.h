@@ -1,10 +1,10 @@
 #ifndef __DEVICE_DISK_H
 #define __DEVICE_DISK_H
 
-#include "stdint.h"
-#include "list.h"
-#include "bitmap.h"
-#include "lock.h"
+#include <stdint.h>
+#include <list.h>
+#include <bitmap.h>
+#include <lock.h>
 
 #define NAME_LEN 8
 #define PRIM_PARTS_CNT 4

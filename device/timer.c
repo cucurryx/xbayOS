@@ -1,11 +1,11 @@
-#include "timer.h"
+#include <timer.h>
 
-#include "print.h"
-#include "io.h"
-#include "interrupt.h"
-#include "thread.h"
-#include "debug.h"
-#include "global.h"
+#include <print.h>
+#include <io.h>
+#include <interrupt.h>
+#include <thread.h>
+#include <debug.h>
+#include <global.h>
 #include <printk.h>
 
 #define IRQ0_FREQUENCY   100 //频率
