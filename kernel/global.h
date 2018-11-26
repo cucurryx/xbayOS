@@ -77,4 +77,7 @@ typedef struct __gdt_desc {
 
 #define DIV_ROUND_UP(x, step) ((x + step - 1) / step)
 
+
+#define DISK_CNT_POINTER 0x475
+
 #endif // !__KERNEL_GLOBAL_H

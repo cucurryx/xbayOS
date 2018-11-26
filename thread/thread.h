@@ -101,5 +101,7 @@ void thread_block(task_status state);
 void thread_unblock(task_struct *thread);
 task_struct *node_to_task(list_node *node, node_type type);
 pid_t get_thread_pid(task_struct *thread);
+void thread_yield();
+
 
 #endif // !__THREAD_THREAD_H

@@ -493,9 +493,7 @@ void sys_free(void *ptr) {
 
 //entry of memory management
 void mem_init() {
-    put_str("mem_init start\n");
     uint32_t mem_bytes_total = (*(uint32_t*)(0xb00)); //已经在loader中计算得出，放在0xb00
     mem_pool_init(mem_bytes_total);
     mem_block_init(km_block_descs);
-    put_str("mem_init done\n");
 }

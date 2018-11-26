@@ -13,7 +13,7 @@
 #include "process.h"
 #include "syscall.h"
 #include "stdio.h"
-
+#include <timer.h>
 
 void *start1(void *arg);
 void *start2(void *arg);
@@ -26,13 +26,13 @@ uint32_t pid_1 = -1, pid_2 = -1, pid_3 = -1, pid_4 = -1;
 
 int main() {
     init_all();
-    process_execute(prog1, "prog1");
-    process_execute(prog2, "prog2");
+    // process_execute(prog1, "prog1");
+    // process_execute(prog2, "prog2");
     // process_execute(prog3, "prog3");
     // process_execute(prog4, "prog4");
 
-    thread_start("threa1", 16, start1, (void*)"1_");
-    thread_start("thread2", 16, start2, (void*)"2_");
+    thread_start("threa1", 16, start1, (void*)"1");
+    thread_start("thread2", 16, start2, (void*)"2");
     
     intr_enable();
 
@@ -80,9 +80,17 @@ void prog4() {
 }
 
 void *start1(void *arg) {
+    for (int i = 0; i < 10; ++i) {
+        sleep_by_msecond(1000);
+        printf("a:%x  \n", i);
+    }
     while (1);
 }
 
 void *start2(void *arg) {
+    for (int i = 0; i < 10; ++i) {
+        sleep_by_second(1);
+        printf("b:%x  \n", i);
+    }
     while (1);
 }

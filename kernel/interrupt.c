@@ -78,6 +78,9 @@ static void pic_init() {
     //打开主片上的IR0(时钟产生的中断)
     outb(PIC_M_DATA, 0xfc);
     outb(PIC_S_DATA, 0xff);
+
+    //打开从片上的IR14
+    outb(PIC_S_DATA, 0xbf);
 }
 
 //如果设置中断处理函数，就会执行这个默认中断处理函数

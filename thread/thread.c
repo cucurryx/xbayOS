@@ -12,6 +12,9 @@ extern void switch_to(task_struct *curr, task_struct *next);
 static mutex_t pid_lock;
 static pid_t next_pid = 0;
 
+//idle线程，CPU空闲时执行该线程，挂起CPU
+static task_struct *idle_thread;
+
 //获取一个pid
 static pid_t allocate_pid() {
     pid_t pid;
@@ -129,7 +132,10 @@ void schedule() {
         //todo
     }
 
-    ASSERT(list_empty(&ready_thread_list) == false);
+    if (list_empty(&ready_thread_list)) {
+        //如果CPU空闲，那么解除idle线程的阻塞
+        thread_unblock(idle_thread);
+    }
     
     list_node *temp_node = list_pop_front(&ready_thread_list);
     task_struct *next_thread = node_to_task(temp_node, GENERAL_LIST_NODE);
@@ -161,12 +167,22 @@ void schedule() {
 //     );
 // }
 
+//idle线程线程函数，用来在CPU空闲时，将其挂起，避免不停空转
+static void *idle(void *args) {
+    while (true) {
+        thread_block(BLOCKED);
+        asm volatile ("sti; hlt" : : : "memory");
+    }
+}
+
 //做线程方面的初始化工作，设置主线程
 void thread_init() {
     mutex_init(&pid_lock);
     list_init(&ready_thread_list);
     list_init(&all_thread_list);
     make_main_thread();
+
+    idle_thread = thread_start("idle", 10, (thread_func)idle, NULL);
 }
 
 //阻塞当前线程，并且将其状态设置为state
@@ -200,4 +216,18 @@ void thread_unblock(task_struct *thread) {
 //获取任务thread的pid
 pid_t get_thread_pid(task_struct *thread) {
     return thread->pid;
+}
+
+//线程主动让出自己的CPU使用权，调度其他线程执行
+void thread_yield() {
+    intr_stat status;
+    INTERRUPT_DISABLE(status);
+
+    task_struct *curr = running_thread();
+    curr->status = READY;
+    ASSERT(list_exist(&ready_thread_list, &curr->gene_list_tag) == false);
+    list_push_back(&ready_thread_list, &curr->gene_list_tag);
+    schedule();
+
+    INTERRUPT_RESTORE(status);    
 }
