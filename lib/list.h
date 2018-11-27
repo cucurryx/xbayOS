@@ -1,7 +1,7 @@
 #ifndef __LIB_LIST_H
 #define __LIB_LIST_H
 
-#include "stdint.h"
+#include <stdint.h>
 
 typedef struct __list_node list_node;
 typedef struct __list list;

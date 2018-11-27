@@ -2,30 +2,17 @@
 #include "string.h"
 #include "syscall.h"
 
-#define va_start(ap, first)     \
-    do {                        \
-        ap = (va_list)&first;    \
-    } while (0);
-
-
-#define va_arg(ap, type) *((type*)(ap += 4))
-
-#define va_end(ap)  \
-    do {            \
-        ap = NULL;  \
-    } while (0);
-
-#define va_copy(dest, src)                  \
-    do {                                    \
-        memcpy(dest, src, sizeof(src));     \
-    } while (0);
-
 static void itoa(char **target, uint32_t var, uint8_t base) {
     uint8_t digits[32];
     int8_t cnt = 0;
-    while (var != 0) {
-        digits[cnt++] = var % base;
-        var /= base;
+
+    if (var == 0) {
+        digits[cnt] = '0';
+    } else {
+        while (var != 0) {
+            digits[cnt++] = var % base;
+            var /= base;
+        }
     }
 
     --cnt;

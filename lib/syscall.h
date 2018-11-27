@@ -12,6 +12,7 @@ enum __syscall_nr {
     SYS_FREE   = 4
 };
 
+
 uint16_t getpid();
 uint32_t write(char *s);
 void *malloc(uint32_t size);
