@@ -16,7 +16,7 @@ a tiny operating system kernel (developing)
 - [x] user process
 - [x] system call
 - [x] heap memory
-- [ ] hard disk driver
+- [x] hard disk driver
 - [ ] file system
 - [ ] fork, read, shell, exec, balabala...
 - [ ] ...

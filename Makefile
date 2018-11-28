@@ -15,7 +15,8 @@ OBJS = $(TARGET_DIR)/main.o $(TARGET_DIR)/init.o $(TARGET_DIR)/interrupt.o \
 	  $(TARGET_DIR)/switch.o $(TARGET_DIR)/lock.o $(TARGET_DIR)/console.o \
 	  $(TARGET_DIR)/keyboard.o $(TARGET_DIR)/io_queue.o $(TARGET_DIR)/tss.o \
 	  $(TARGET_DIR)/process.o $(TARGET_DIR)/syscall.o $(TARGET_DIR)/syscall_init.o \
-	  $(TARGET_DIR)/stdio.o $(TARGET_DIR)/printk.o $(TARGET_DIR)/disk.o
+	  $(TARGET_DIR)/stdio.o $(TARGET_DIR)/printk.o $(TARGET_DIR)/disk.o	\
+	  $(TARGET_DIR)/dir.o $(TARGET_DIR)/file.o $(TARGET_DIR)/fs.o $(TARGET_DIR)/superblock.o
 
 $(TARGET_DIR)/main.o: kernel/main.c lib/print.h lib/stdint.h kernel/init.h
 	$(CC) $(CFLAGS) $< -o $@
@@ -81,6 +82,21 @@ $(TARGET_DIR)/printk.o: lib/printk.c lib/printk.h
 
 $(TARGET_DIR)/disk.o: device/disk.c device/disk.h
 	$(CC) $(CFLAGS) $< -o $@
+
+$(TARGET_DIR)/dir.o: fs/dir.c fs/dir.h 
+	$(CC) $(CFLAGS) $< -o $@
+
+$(TARGET_DIR)/file.o: fs/file.c fs/file.h
+	$(CC) $(CFLAGS) $< -o $@
+
+$(TARGET_DIR)/fs.o: fs/fs.c fs/fs.h
+	$(CC) $(CFLAGS) $< -o $@
+
+$(TARGET_DIR)/superblock.o fs/superblock.c fs/superblock.h
+	$(CC) $(CFLAGS) $< -o $@
+
+
+
 
 
 
