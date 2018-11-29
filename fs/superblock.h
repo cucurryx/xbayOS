@@ -39,7 +39,10 @@ struct __super_block {
     uint32_t in_array_addr;
 
     //inode数组大小
-    uint32_t in_arrat_size;
+    uint32_t in_array_size;
+
+    //数据区域start lba
+    uint32_t data_start;
 
     //根目录地址
     uint32_t root_inode_no;
