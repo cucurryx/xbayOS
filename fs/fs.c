@@ -4,10 +4,15 @@
 #include <printk.h>
 #include <global.h>
 #include <dir.h>
-
+#include <debug.h>
 
 extern ide_channel channels[CHANNEL_DEVICE_CNT];
 
+//默认操作的分区
+partition *curr_part;
+
+
+//初始化supbe block
 static void init_super_block(disk *d, partition *part, super_block *sb) {
     uint32_t total_secs = part->count;
 
@@ -150,6 +155,57 @@ static void build_fs(disk *d, partition *part) {
     sys_free(buf);
 }
 
+//挂载默认分区，将该分区文件系统元信息读入内存
+//分别读入superblock, block bitmap, inode bitmap
+// ----------------------------------------------------------------
+// | boot  | super | free block | inode  | inode | root |  free   |
+// | block | block |   bitmap   | bitmap | array |  dir |  blocks |
+// ----------------------------------------------------------------
+void mount_part(partition *part) {
+    curr_part = part;
+    disk *d = curr_part->belong_disk;
+
+
+    //磁盘读写必须以sector为单位
+    super_block *buf = (super_block*)sys_malloc(SECTOR_SIZE);
+    ASSERT(buf != NULL);
+
+    memset(buf, 0, SECTOR_SIZE);
+    ide_read(d, curr_part->start + 1, buf, 1);
+
+
+    curr_part->sb = (super_block*)sys_malloc(sizeof(super_block));
+    memset(curr_part->sb, 0, sizeof(super_block));
+    memcpy(curr_part->sb, buf, sizeof(super_block));
+
+    //设置block bitmap
+    uint32_t bytes = buf->fb_bmap_size * SECTOR_SIZE;
+    curr_part->block_bm.bits = (uint8_t*)sys_malloc(bytes);
+    curr_part->block_bm.length = bytes;
+    ASSERT(curr_part->block_bm.bits != NULL);
+
+    ide_read(d, buf->fb_bmap_addr, curr_part->block_bm.bits, buf->fb_bmap_size);
+
+    //设置inode bitmap
+    bytes = buf->in_bmap_size * SECTOR_SIZE;
+    curr_part->inode_bm.bits = (uint8_t*)sys_malloc(bytes);
+    curr_part->inode_bm.length = bytes;
+    ASSERT(curr_part->inode_bm.bits != NULL);
+
+    ide_read(d, buf->in_bmap_addr, curr_part->inode_bm.bits, buf->in_bmap_size);
+
+    list_init(&curr_part->open_inodes);
+
+#ifndef NODEBUG
+    printk("%s mount ok! the block bitmap size: %d, "
+           "the inode bitmap size: %d\n", 
+           curr_part->name,
+           curr_part->block_bm.length, 
+           curr_part->inode_bm.length);
+#endif // !NODEBUG
+
+}
+
 //文件系统初始化
 void fs_init() {
     super_block *sb = (super_block*)sys_malloc(BLOCK_SIZE);
@@ -159,6 +215,8 @@ void fs_init() {
     //hd80m.img
     disk *d = &channel->devices[1];
 
+    char *default_part_name = "sdb1";
+
     partition *part = d->prim_parts;
     for (int i = 0; i < PRIM_PARTS_CNT; ++i) {
         if (part->count != 0) {
@@ -167,15 +225,29 @@ void fs_init() {
 
             //如果存在文件系统，就不需要build_fs
             if (sb->magic_num == 0xcafebebe) {
-                printk("\n%s file system ok!", part->name);
+#ifndef NODEBUG
+                printk("%s file system ok!\n", part->name);
+#endif // !NODEBUG
+
             } else {
                 build_fs(d, part);
-                printk("\n%s build file system.", part->name);
-            }
-        }
-    }
+#ifndef NODEBUG
+                printk("%s build file system.\n", part->name);
+#endif // !NODEBUG
 
+            }
+
+            //挂载name为default_part_name的分区
+            if (strcmp(part->name, default_part_name) == 0) {
+                mount_part(part);
+            }
+
+        }
+        ++part;
+    }
+    
     part = d->logic_parts;
+
     for (int i = 0; i < LOGIC_PARTS_CNT; ++i) {
         if (part->count != 0) {
             memset(sb, 0, SECTOR_SIZE);
@@ -183,12 +255,20 @@ void fs_init() {
 
             //如果存在文件系统，就不需要build_fs
             if (sb->magic_num == 0xcafebebe) {
+#ifndef NODEBUG
                 printk("%s file system ok!\n", part->name);
+#endif // !NODEBUG
+
             } else {
                 build_fs(d, part);
+
+#ifndef NODEBUG
                 printk("%s build file system.\n", part->name);
+#endif // !NODEBUG
+
             }
         }
+        ++part;
     }
 
     sys_free(sb);
