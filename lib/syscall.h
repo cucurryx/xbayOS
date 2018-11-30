@@ -1,7 +1,7 @@
 #ifndef __LIB_SYSCALL_H
 #define __LIB_SYSCALL_H
 
-#include "stdint.h"
+#include <stdint.h>
 
 typedef enum __syscall_nr syscall_nr;
 

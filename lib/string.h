@@ -1,7 +1,7 @@
 #ifndef __LIB_STRING_H 
 #define __LIB_STRING_H
 
-#include "stdint.h"
+#include <stdint.h>
 
 
 void memset(void *dest, uint8_t value, uint32_t size);

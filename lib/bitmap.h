@@ -1,7 +1,7 @@
 #ifndef __LIB_BITMAP_H
 #define __LIB_BITMAP_H
 
-#include "stdint.h"
+#include <stdint.h>
 
 //length是bits指向内存的byte数
 //bits指向存储bitmap的内存

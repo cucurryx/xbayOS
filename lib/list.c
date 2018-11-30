@@ -1,5 +1,5 @@
-#include "list.h"
-#include "interrupt.h"
+#include <list.h>
+#include <interrupt.h>
 
 //初始化双向链表，head和tail互相指向
 //链表设计为初始head, tail两个节点，然后插入的数据都在两者之间

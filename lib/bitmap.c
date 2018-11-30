@@ -1,6 +1,6 @@
-#include "bitmap.h"
-#include "string.h"
-#include "debug.h"
+#include <bitmap.h>
+#include <string.h>
+#include <debug.h>
 
 //初始化bitmap，设置其长度，并将所有bits置为0
 void bitmap_init(bitmap *bm, uint32_t len) {

@@ -1,5 +1,5 @@
-#include "string.h"
-#include "debug.h"
+#include <string.h>
+#include <debug.h>
 
 //将dest开始的size个字节设置为value
 void memset(void *dest, uint8_t value, uint32_t size)  {

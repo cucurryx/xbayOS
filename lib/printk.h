@@ -1,7 +1,7 @@
 #ifndef __LIB_PRINTK_H
 #define __LIB_PRINTK_H
 
-#include "stdio.h"
+#include <stdio.h>
 
 void printk(const char *format, ...);
 

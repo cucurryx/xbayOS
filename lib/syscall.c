@@ -1,5 +1,5 @@
-#include "syscall.h"
-#include "stdint.h"
+#include <syscall.h>
+#include <stdint.h>
 
 #define _syscall0(NUM)                                          \
     ({                                                          \        

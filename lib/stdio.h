@@ -1,7 +1,7 @@
 #ifndef __LIB_STDIO_H
 #define __LIB_STDIO_H
 
-#include "stdint.h"
+#include <stdint.h>
 
 typedef char* va_list;
 

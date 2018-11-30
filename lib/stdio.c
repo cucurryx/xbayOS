@@ -1,6 +1,6 @@
-#include "stdio.h"
-#include "string.h"
-#include "syscall.h"
+#include <stdio.h>
+#include <string.h>
+#include <syscall.h>
 
 static void itoa(char **target, uint32_t var, uint8_t base) {
     uint8_t digits[32];
