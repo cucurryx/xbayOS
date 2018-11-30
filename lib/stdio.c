@@ -26,6 +26,8 @@ static void itoa(char **target, uint32_t var, uint8_t base) {
         --cnt;
     }
 }
+
+
 //将format中占位符用ap中参数实际值替换，结果值放在str中返回
 uint32_t vsprintf(char *str, const char *format, va_list args) {
     const char *f = format;
@@ -50,6 +52,7 @@ uint32_t vsprintf(char *str, const char *format, va_list args) {
                 case 's':
                     s = va_arg(args, char*);
                     p = strcpy(p, s);
+                    p += strlen(s);
                     break;
                 case 'x':
                     //函数参数放置在栈中，从栈中读取args
