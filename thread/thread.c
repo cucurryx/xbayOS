@@ -54,11 +54,25 @@ task_struct *node_to_task(list_node *node, node_type type) {
     return (task_struct*)((int)node - offset);
 }
 
+//初始化进程的文件描述符表
+static void fd_table_init(task_struct *thread) {
+
+    //STDIN, STDOUT, STDERR
+    thread->fd_table[0] = 0;
+    thread->fd_table[1] = 1;
+    thread->fd_table[2] = 2;
+
+    for (int i = 3; i < FD_MAX; ++i) {
+        thread->fd_table[i] = -1;
+    }
+}
+
 //初始化task_struct
 void task_struct_init(task_struct *thread, char *name, int prio) {
     ASSERT(thread != NULL);
     memset(thread, 0, sizeof(thread->kstack));
     strcpy(thread->name, name);
+    
     thread->status = (thread == main_thread) ? RUNNING : READY;
     thread->priority = prio;
     thread->pid = allocate_pid();
@@ -175,13 +189,14 @@ static void *idle(void *args) {
     }
 }
 
+
 //做线程方面的初始化工作，设置主线程
 void thread_init() {
     mutex_init(&pid_lock);
     list_init(&ready_thread_list);
     list_init(&all_thread_list);
     make_main_thread();
-
+    
     idle_thread = thread_start("idle", 10, (thread_func)idle, NULL);
 }
 

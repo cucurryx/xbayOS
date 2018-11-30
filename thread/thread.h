@@ -5,7 +5,13 @@
 #include "stdint.h"
 #include "list.h"
 
+//每个进程能够创建的文件描述符最大数量
+#define FD_MAX 
+
+//默认线程优先级
 #define DEFAULT_THREAD_PRIO 32
+
+//页框大小
 #define PAGE_SIZE (1 << 12)
 
 typedef enum __task_status task_status;
@@ -76,6 +82,7 @@ struct __task_struct {
     pid_t pid;                //进程pid
     uint32_t ava_time;        //剩余可用的CPU时间
     uint32_t elapsed_time;    //该线程已经占用的CPU时间
+    int32_t fd_table[FD_MAX]; //进程的文件描述符表
     char name[16];            //线程名
     list_node gene_list_tag;  //普通链表使用的tag
     list_node all_list_tag;   //专门给all_threads list使用的tag
