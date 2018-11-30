@@ -49,9 +49,15 @@ void free_page(pool_flags type, void *vaddr, uint32_t page_cnt);
 void *get_kern_pages(uint32_t page_cnt);
 void *get_user_pages(uint32_t page_cnt);
 void *get_page(pool_flags type, uint32_t vaddr);
+
 uint32_t vaddr_to_phy(uint32_t vaddr);
 void mem_block_init(mem_block_desc *descs);
+
 void *sys_malloc(uint32_t size);
 void sys_free(void *p);
+
+void *sys_kmalloc(uint32_t size);
+void sys_kfree(void *p);
+
 
 #endif // !__KERNEL_MEMORY_H

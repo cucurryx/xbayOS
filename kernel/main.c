@@ -1,18 +1,18 @@
-#include "print.h"
-#include "init.h"
-#include "debug.h"
-#include "string.h"
-#include "bitmap.h"
-#include "memory.h"
-#include "list.h"
-#include "thread.h"
-#include "interrupt.h"
-#include "lock.h"
-#include "console.h"
-#include "io_queue.h"
-#include "process.h"
-#include "syscall.h"
-#include "stdio.h"
+#include <print.h>
+#include <init.h>
+#include <debug.h>
+#include <string.h>
+#include <bitmap.h>
+#include <memory.h>
+#include <list.h>
+#include <thread.h>
+#include <interrupt.h>
+#include <lock.h>
+#include <console.h>
+#include <io_queue.h>
+#include <process.h>
+#include <syscall.h>
+#include <stdio.h>
 #include <timer.h>
 
 void *start1(void *arg);
@@ -80,6 +80,7 @@ void prog4() {
 }
 
 void *start1(void *arg) {
+    char buf[10];
     for (int i = 0; i < 10; ++i) {
         sleep_by_msecond(1000);
         printf("a:%x  \n", i);

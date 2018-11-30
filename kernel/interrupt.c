@@ -75,11 +75,10 @@ static void pic_init() {
     outb(PIC_S_DATA, 0x02);
     outb(PIC_S_DATA, 0x01);
 
-    //打开主片上的IR0(时钟产生的中断)
-    outb(PIC_M_DATA, 0xfc);
-    outb(PIC_S_DATA, 0xff);
+    //打开主片上的IRQ0(时钟产生的中断), IRQ1和IRQ2
+    outb(PIC_M_DATA, 0xf8);
 
-    //打开从片上的IR14
+    //打开从片上的IRQ14
     outb(PIC_S_DATA, 0xbf);
 }
 

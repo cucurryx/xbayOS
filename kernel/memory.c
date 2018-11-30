@@ -491,9 +491,32 @@ void sys_free(void *ptr) {
     mutex_unlock(&mem_pool->mutex);
 }
 
+//从内核空间中分配内存
+void *sys_kmalloc(uint32_t size) {
+    task_struct *curr = running_thread();
+    uint32_t *temp = curr->page_dir;
+
+    curr->page_dir = NULL;
+    void *res = sys_malloc(size);
+    curr->page_dir = temp;
+
+    return res;
+}
+
+//释放sys_kmalloc分配的空间
+void sys_kfree(void *p) {
+    task_struct *curr = running_thread();
+    uint32_t *temp = curr->page_dir;
+    
+    curr->page_dir = NULL;
+    sys_free(p);
+    curr->page_dir = temp;
+}
+
 //entry of memory management
 void mem_init() {
     uint32_t mem_bytes_total = (*(uint32_t*)(0xb00)); //已经在loader中计算得出，放在0xb00
     mem_pool_init(mem_bytes_total);
     mem_block_init(km_block_descs);
 }
+

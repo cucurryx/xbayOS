@@ -1,7 +1,7 @@
 #ifndef __KERNEL_GLOBAL_H
 #define __KERNEL_GLOBAL_H
 
-#include "stdint.h"
+#include <stdint.h>
 
 //关于中断描述符的一些属性定义
 #define  RPL0  0
@@ -79,5 +79,7 @@ typedef struct __gdt_desc {
 
 
 #define DISK_CNT_POINTER 0x475
+
+#define max(a, b) (a > b ? a : b)
 
 #endif // !__KERNEL_GLOBAL_H
