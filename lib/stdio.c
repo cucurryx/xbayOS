@@ -7,7 +7,7 @@ static void itoa(char **target, uint32_t var, uint8_t base) {
     int8_t cnt = 0;
 
     if (var == 0) {
-        digits[cnt] = '0';
+        digits[cnt++] = 0;
     } else {
         while (var != 0) {
             digits[cnt++] = var % base;
