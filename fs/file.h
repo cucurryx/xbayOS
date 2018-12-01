@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <inode.h>
+#include <dir.h>    
 
 #define STDIN  0
 #define STDOUT 1
@@ -44,5 +45,8 @@ int32_t inode_bm_alloc(partition *part);
 int32_t block_bm_alloc(partition *part);
 
 void bitmap_sync(partition *part, uint32_t idx, uint8_t type);
+
+int32_t create_file(struct __dir_t *parent, char *filename, uint8_t flag);
+
 
 #endif // !__FS_FILE_H

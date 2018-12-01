@@ -1,7 +1,6 @@
 #include <dir.h>
 #include <memory.h>
 #include <debug.h>
-#include <fs.h>
 #include <file.h>
 #include <printk.h>
 

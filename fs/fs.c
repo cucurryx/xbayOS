@@ -5,9 +5,12 @@
 #include <global.h>
 #include <dir.h>
 #include <debug.h>
+#include <file.h>
 
 extern ide_channel channels[CHANNEL_DEVICE_CNT];
 extern dir_t root;
+extern file file_table[OPEN_FILE_MAX];
+
 
 //默认操作的分区
 partition *curr_part;
@@ -271,8 +274,14 @@ void fs_init() {
         }
         ++part;
     }
-
     sys_free(sb);
+
+
+    //打开根目录，初始化文件表file的inode为NULL
+    open_root(curr_part);
+    for (int i = 0; i < OPEN_FILE_MAX; ++i) {
+        file_table[i].fd_inode = NULL;
+    }
 }
 
 //解析pathname，并将第一个路径名放在first中返回
@@ -295,14 +304,17 @@ static char *parse_path(char *path, char *first) {
 }
 
 //解析路径深度
-uint32_t path_depth(char *path) {
+uint32_t path_depth(const char *path) {
     ASSERT(path != NULL);
     
     uint32_t depth = 0;
     char buf[FILENAME_LEN];
+    char p[strlen(path)];
+
+    strcpy(p, path);
 
     while (path != NULL && *path != '\0') {
-        path = parse_path(path, buf);
+        path = parse_path(p, buf);
 
         if (*path != NULL && *path != '\0') {
             ++depth;
@@ -405,4 +417,65 @@ static uint32_t search_file(const char *path, path_record *record) {
     record->type = FT_DIRECTORY;
 
     return entry.inode_no;
+}
+
+//判断是否为目录
+static bool is_directory(const char *path) {
+    return path != NULL && 
+           strlen(path) > 0 && 
+           path[strlen(path)-1] == '/';
+}
+
+
+//创建文件，路径为path，文件标识为flag
+//如果创建成功，返回文件描述符，否则返回-1
+int32_t sys_open(const char *path, uint8_t flag) {
+    ASSERT(!is_directory(path));
+    ASSERT(flag == O_RDONLY || flag == O_RDWR || flag == O_WRONLY || flag == O_CREAT);
+
+    path_record record;
+    memset(&record, 0, sizeof(path_record));
+
+    int32_t fd = -1;
+    int32_t inode_no = search_file(path, &record);
+    uint32_t pdepth = path_depth(path);
+
+    if (record.type == FT_DIRECTORY) {
+        printk("can't open a directory with open()\n");
+        close_dir(record.parent);
+        return -1;
+    }
+
+    uint32_t rdepth = path_depth(record.prev);
+
+    if (pdepth != rdepth) {
+        printk("can't access %s: not a directory, there're no %s\n", path, record.prev);
+        close_dir(record.parent);
+        return -1;
+    }
+
+    if (inode_no == -1 && !(flag & O_CREAT)) {
+        printk("file %s not exist!\n", path);
+        close_dir(record.parent);
+        return -1;
+    }
+
+    if (inode_no != -1 && (flag & O_CREAT)) {
+        printk("%d\n", inode_no);
+        printk("%s has already exist!", path);
+        close_dir(record.parent);
+        return -1;
+    }
+
+    switch (flag & O_CREAT) {
+        case O_CREAT:
+#ifndef NODEBUG
+            printk("creating file!\n");
+#endif // !NODEBUG
+        char *filename = strrchr(path, '/') + 1;
+        fd = create_file(record.parent, filename, flag);
+        close_dir(record.parent);
+    }
+
+    return fd;
 }

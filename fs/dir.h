@@ -29,7 +29,7 @@ enum __entry_type {
 
 //目录项
 struct __dir_entry {
-    uint32_t inode_no;
+    int32_t inode_no;
     char name[FILENAME_LEN];
     entry_type type;
 };

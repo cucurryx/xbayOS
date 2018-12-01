@@ -2,10 +2,9 @@
 #define __FS_FS_H
 
 #include <stdint.h>
-#include <list.h>
-#include <superblock.h>
+#include <file.h>
+#include <dir.h>
 #include <inode.h>
-
 
 //每个扇区的bits数
 //512Byte = 4096bit
@@ -26,7 +25,7 @@
 #define O_RDONLY 0x0    //000b
 #define O_WRONLY 0x1    //001b
 #define O_RDWR   0x2    //010b
-#define _CREAT   0x4    //100b
+#define O_CREAT   0x4    //100b
 
 typedef enum __file_type file_type;
 typedef struct __path_record path_record;
@@ -39,13 +38,14 @@ enum __file_type {
 
 struct __path_record {
     char prev[PATH_MAXLEN];
-    dir_t *parent;
+    struct __dir_t *parent;
     file_type type;
 };
 
 void fs_init();
 
-uint32_t path_depth(char *path);
+uint32_t path_depth(const char *path);
+int32_t sys_open(const char *path, uint8_t flag);
 
 
 

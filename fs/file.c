@@ -2,10 +2,14 @@
 #include <printk.h>
 #include <disk.h>
 #include <fs.h>
+#include <dir.h>
+#include <debug.h>
 
+extern partition *curr_part;
 
 //文件表
 file file_table[OPEN_FILE_MAX];
+
 
 //从文件表file_table中分配一个空间位置，返回其下标
 //如果失败，返回-1
@@ -73,4 +77,51 @@ void bitmap_sync(partition *part, uint32_t idx, uint8_t type) {
     }
 
     ide_write(part->belong_disk, sector, offset, 1);
+}
+
+//创建文件，文件名为filename，位于目录parent下，文件标识flag
+//如果创建成功，返回文件描述符，否则返回-1
+int32_t create_file(dir_t *parent, char *filename, uint8_t flag) {
+    uint8_t *buf = (uint8_t*)sys_malloc(SECTOR_SIZE * 2);
+    ASSERT(buf != NULL);
+
+    //分配inode_no和inode，并初始化
+    int32_t inode_no = inode_bm_alloc(curr_part);
+    ASSERT(inode_no != -1);
+
+    inode_t *new_inode = (inode_t*)sys_malloc(sizeof(inode_t));
+    ASSERT(new_inode != NULL);
+    inode_init(inode_no, new_inode);
+
+    //注册文件表
+    int fidx = file_table_alloc();
+    file_table[fidx].fd_inode = new_inode;
+    file_table[fidx].fd_offset = 0;
+    file_table[fidx].fd_flag = flag;
+    file_table[fidx].fd_inode->writing = false;
+
+    dir_entry entry;
+    memset(&entry, 0, sizeof(dir_entry));
+    set_entry(filename, inode_no, ET_FILE, &entry);
+
+    ASSERT(add_entry(parent, &entry, buf));
+
+    //更新bitmap, inode等到硬盘
+    memset(buf, 0, sizeof(buf));
+    inode_sync(curr_part, parent->inode, buf);
+
+    memset(buf, 0, sizeof(buf));
+    inode_sync(curr_part, new_inode, buf);
+
+    bitmap_sync(curr_part, inode_no, INODE_BITMAP);
+
+    list_push_back(&curr_part->open_inodes, &new_inode->i_node);
+
+    new_inode->open_cnt = 1;
+
+    sys_free(buf);
+
+    int32_t fd = fd_install(fidx);
+
+    return fd;
 }
