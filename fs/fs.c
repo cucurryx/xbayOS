@@ -7,6 +7,7 @@
 #include <debug.h>
 
 extern ide_channel channels[CHANNEL_DEVICE_CNT];
+extern dir_t root;
 
 //默认操作的分区
 partition *curr_part;
@@ -276,7 +277,7 @@ void fs_init() {
 
 //解析pathname，并将第一个路径名放在first中返回
 static char *parse_path(char *path, char *first) {
-    if (path == NULL) {
+    if (path == NULL || *path == '\0') {
         return NULL;
     }
 
@@ -313,4 +314,95 @@ uint32_t path_depth(char *path) {
     }
 
     return depth;
+}
+
+//判断路径是否为根目录
+//如果是，设置record并返回true
+static bool is_root(const char *path, path_record *record) {
+    char *root_paths[3] = {
+        "/",
+        "/..",
+        "/."
+    };
+
+    for (int i = 0; i < 3; ++i) {
+        if (strcmp(path, root_paths[i]) == 0) {
+            record->parent = &root;
+            memset(record->prev, 0, sizeof(record->prev));
+            record->type = FT_DIRECTORY;
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool path_valid(const char *path) {
+    uint32_t path_len = strlen(path);
+    return path_len > 1 && path[0] == '/' && path_len < PATH_MAXLEN;
+}
+
+//搜索文件path，如果成功，返回其inode号，否则返回-1
+//其中搜索过的路径记录在record中
+static uint32_t search_file(const char *path, path_record *record) {
+
+    if (is_root(path, record)) {
+        return ROOT_INODE; 
+    }
+
+    ASSERT(path_valid(path));
+
+    char *sub = (char*)path;
+    dir_t *parent = &root;
+    dir_entry entry;
+
+    char name[FILENAME_LEN] = {0};
+
+    record->parent = parent;
+    record->type = FT_UNKOWN;
+    uint32_t pinode_no = 0;
+
+    sub = parse_path(sub, name);
+
+    while (name[0] != '\0') {
+        
+        //记录查询过的路径
+        strcat(record->prev, "/");
+        strcat(record->prev, name);
+
+        //parent的目录项中存在name
+        if (dir_exist(curr_part, parent, name, &entry)) {
+
+            memset(name, 0, FILENAME_LEN);
+            if (sub) {
+                sub = parse_path(sub, name);
+            }
+
+            //parse返回NULL
+            switch(entry.type) {
+                //目录，继续
+                case ET_DIRECTORY:
+                    pinode_no = parent->inode->i_no;
+                    close_dir(parent);
+                    parent = open_dir(curr_part, entry.inode_no);
+                    record->parent = parent;
+                    break;
+                //普通文件
+                case ET_FILE:
+                    record->type = FT_FILE;
+                    return entry.inode_no;
+                default:
+                    break;
+            }
+        } else {
+            return -1;
+        }
+    }
+
+    close_dir(record->parent);
+
+    //更新record
+    record->parent = open_dir(curr_part, pinode_no);
+    record->type = FT_DIRECTORY;
+
+    return entry.inode_no;
 }

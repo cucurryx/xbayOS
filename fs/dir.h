@@ -13,6 +13,7 @@
 #define DIRECT_BLK_CNT 12
 #define BLK_POINTER_SIZE 4
 
+#define ROOT_INODE 0
 
 
 typedef struct __dir_entry dir_entry;
