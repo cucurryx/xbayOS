@@ -295,6 +295,8 @@ static char *parse_path(char *path, char *first) {
 
 //解析路径深度
 uint32_t path_depth(char *path) {
+    ASSERT(path != NULL);
+    
     uint32_t depth = 0;
     char buf[FILENAME_LEN];
 
@@ -306,6 +308,8 @@ uint32_t path_depth(char *path) {
         } else {
             break;
         }
+
+        memset(buf, 0, FILENAME_LEN);
     }
 
     return depth;
