@@ -23,5 +23,6 @@
 
 void fs_init();
 
+uint32_t path_depth(char *path);
 
 #endif // !__FS_FS_H

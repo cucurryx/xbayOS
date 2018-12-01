@@ -273,3 +273,40 @@ void fs_init() {
 
     sys_free(sb);
 }
+
+//解析pathname，并将第一个路径名放在first中返回
+static char *parse_path(char *path, char *first) {
+    if (path == NULL) {
+        return NULL;
+    }
+
+    while (*path == '/') {
+        ++path;
+    }
+
+    while (*path != '/' && *path != '\0') {
+        *first = *path;
+        ++path;
+        ++first;
+    }
+
+    return path;
+}
+
+//解析路径深度
+uint32_t path_depth(char *path) {
+    uint32_t depth = 0;
+    char buf[FILENAME_LEN];
+
+    while (path != NULL && *path != '\0') {
+        path = parse_path(path, buf);
+
+        if (*path != NULL && *path != '\0') {
+            ++depth;
+        } else {
+            break;
+        }
+    }
+
+    return depth;
+}
