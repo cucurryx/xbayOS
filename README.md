@@ -3,24 +3,6 @@ a tiny operating system kernel (developing)
 
 一个简易的操作系统内核，在bochs中运行。
 
-## TODO
-- [x] MBR -> loader
-- [x] paging
-- [x] loader -> kernel
-- [x] interrupt handler
-- [x] debug tools
-- [x] memory management system
-- [x] kernel level thread
-- [x] locks
-- [x] IO
-- [x] user process
-- [x] system call
-- [x] heap memory
-- [x] hard disk driver
-- [ ] file system
-- [ ] fork, read, shell, exec, balabala...
-- [ ] ...
-
 ## how to build
 
 1. install and configure bochs
